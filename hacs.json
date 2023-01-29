@@ -1,10 +1,5 @@
 {
     "name": "Vaillant Plus",
     "hacs": "1.6.0",
-    "domains": [
-        "binary_sensor",
-        "sensor",
-        "climate"
-    ],
     "homeassistant": "2022.12.0"
 }
