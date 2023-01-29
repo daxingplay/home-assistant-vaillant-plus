@@ -1,0 +1,14 @@
+{
+  "domain": "vaillant_plus",
+  "name": "Vaillant Plus",
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/vaillant_plus",
+  "requirements": ["vaillant-plus-cn-api==0.2.0"],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": ["http"],
+  "codeowners": ["@daxingplay"],
+  "iot_class": "cloud_push",
+  "loggers": ["vaillant_plus_cn_api"]
+}
