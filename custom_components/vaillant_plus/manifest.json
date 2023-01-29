@@ -1,6 +1,7 @@
 {
   "domain": "vaillant_plus",
   "name": "Vaillant Plus",
+  "version": "0.1.0",
   "config_flow": true,
   "documentation": "https://github.com/daxingplay/home-assistant-vaillant-plus",
   "issue_tracker": "https://github.com/daxingplay/home-assistant-vaillant-plus/issues",
