@@ -1,10 +1,10 @@
 {
-    "name": "Integration blueprint",
+    "name": "Vaillant Plus",
     "hacs": "1.6.0",
     "domains": [
         "binary_sensor",
         "sensor",
-        "switch"
+        "climate"
     ],
-    "homeassistant": "0.118.0"
+    "homeassistant": "2022.12.0"
 }
