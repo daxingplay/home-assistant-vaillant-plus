@@ -118,17 +118,22 @@ async def async_setup_entry(
         entry.entry_id
     ]
 
+    added_entities = []
+
     @callback
     def async_new_entities(device_attrs: dict[str, Any]):
         _LOGGER.debug("add vaillant sensor entities. device attrs: %s", device_attrs)
-        async_add_entities(
-            (
-                VaillantSensorEntity(client, description)
-                for description in SENSOR_DESCRIPTIONS
-                if description.key in device_attrs
-            ),
-            True,
-        )
+        new_entities = []
+        for description in SENSOR_DESCRIPTIONS:
+            if (
+                description.key in device_attrs
+                and description.key not in added_entities
+            ):
+                new_entities.append(VaillantSensorEntity(client, description))
+                added_entities.append(description.key)
+
+        if len(new_entities) > 0:
+            async_add_entities(new_entities)
 
     unsub = async_dispatcher_connect(
         hass, EVT_DEVICE_CONNECTED.format(device_id), async_new_entities

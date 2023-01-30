@@ -47,11 +47,17 @@ async def async_setup_entry(
         entry.entry_id
     ]
 
+    added_entities = []
+
     @callback
     def async_new_climate(device_attrs: dict[str, Any]):
         _LOGGER.debug("New climate found")
-        new_devices = [VaillantClimate(client)]
-        async_add_devices(new_devices, True)
+        if "climate" not in added_entities:
+            new_devices = [VaillantClimate(client)]
+            async_add_devices(new_devices)
+            added_entities.append("climate")
+        else:
+            _LOGGER.debug("Already added climate device. skip.")
 
     unsub = async_dispatcher_connect(
         hass, EVT_DEVICE_CONNECTED.format(device_id), async_new_climate
