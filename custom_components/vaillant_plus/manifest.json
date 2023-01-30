@@ -5,7 +5,7 @@
   "config_flow": true,
   "documentation": "https://github.com/daxingplay/home-assistant-vaillant-plus",
   "issue_tracker": "https://github.com/daxingplay/home-assistant-vaillant-plus/issues",
-  "requirements": ["vaillant-plus-cn-api==0.2.0"],
+  "requirements": ["vaillant-plus-cn-api==0.3.1"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
