@@ -56,6 +56,13 @@ Home Assistant instance running and already configured with the included
 [`.devcontainer/configuration.yaml`](./.devcontainer/configuration.yaml)
 file.
 
+## Sign your commits
+
+If you have issues when signing your commits with an error `fatal: cannot run /usr/local/bin/gpg: No such file or directory`, run the following command in your devcontainer terminal:
+```
+git config --global gpg.program $(which gpg)
+```
+
 ## License
 
-By contributing, you agree that your contributions will be licensed under its MIT License.
+By contributing, you agree that your contributions will be licensed under its GPLv3 License.
