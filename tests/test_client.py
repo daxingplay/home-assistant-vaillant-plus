@@ -1,6 +1,6 @@
 """Tests for vaillant-plus client."""
 import asyncio
-
+import pytest
 import aiohttp
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -8,6 +8,7 @@ from custom_components.vaillant_plus.client import VaillantApiHub
 from .const import CONF_USERNAME, CONF_PASSWORD, CONF_HOST, CONF_HOST_API
 
 
+@pytest.mark.asyncio
 async def test_client(hass, aioclient_mock, caplog):
     """Test API calls."""
 
