@@ -19,7 +19,7 @@ async def test_client(hass, aioclient_mock, caplog):
     # to mock responses to aiohttp requests.
     aioclient_mock.post(
         f"{CONF_HOST}/app/user/login",
-        json={"code": 200, "data": {"token": "1", "uid": "2"}},
+        json={"code": "200", "data": {"token": "1", "uid": "2"}},
     )
     token = await client.login(CONF_USERNAME, CONF_PASSWORD)
     assert token.username == CONF_USERNAME
