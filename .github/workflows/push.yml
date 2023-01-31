@@ -52,7 +52,7 @@ jobs:
             --timeout=9 \
             --durations=10 \
             -n auto \
-            --cov custom_components.vaillant-plus \
+            --cov custom_components.vaillant_plus \
             -o console_output_style=count \
             -p no:sugar \
             tests
