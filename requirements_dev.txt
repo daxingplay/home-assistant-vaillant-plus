@@ -1,2 +1,2 @@
 homeassistant
-vaillant-plus-cn-api==0.3.1
+vaillant-plus-cn-api==0.3.2
