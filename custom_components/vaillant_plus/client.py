@@ -24,8 +24,6 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from .const import EVT_DEVICE_CONNECTED, EVT_DEVICE_UPDATED, EVT_TOKEN_UPDATED
 
 _LOGGER = logging.getLogger(__name__)
-# TODO to be removed
-# ogging.getLogger("asyncio").setLevel(logging.DEBUG)
 
 
 class VaillantApiHub:
@@ -57,29 +55,32 @@ class VaillantApiHub:
     async def get_device(self, token: Token, device_id: str) -> Device:
         device_list: list[Device] = []
         device: Device | None = None
+        succeed = False
 
-        try:
-            device_list = await self.get_device_list(token.token)
-            for d in device_list:
-                if d.id == device_id:
-                    device = d
-                    break
+        while not succeed:
+            try:
+                device_list = await self.get_device_list(token.token)
+                for item in device_list:
+                    if item.id == device_id:
+                        device = item
+                        break
 
-            if device is None:
-                raise ShouldUpdateConfigEntry
+                if device is None:
+                    raise ShouldUpdateConfigEntry
 
-            device_info = await self.get_device_info(token.token, device.mac)
-            device.model = device_info["model"]
-            device.sno = device_info["sno"]
-            device.serial_number = device_info["serial_number"]
-            return device
-        except InvalidAuthError:
-            token_new = await self.login(token.username, token.password)
-            async_dispatcher_send(
-                self._hass, EVT_TOKEN_UPDATED.format(token.username), token_new
-            )
-            await asyncio.sleep(3)
-            return await self.get_device(self, token_new, device_id)
+                device_info = await self.get_device_info(token.token, device.mac)
+                device.model = device_info["model"]
+                device.sno = device_info["sno"]
+                device.serial_number = device_info["serial_number"]
+                succeed = True
+                return device
+            except InvalidAuthError:
+                token_new = await self.login(token.username, token.password)
+                async_dispatcher_send(
+                    self._hass, EVT_TOKEN_UPDATED.format(token.username), token_new
+                )
+                succeed = False
+                await asyncio.sleep(3)
 
 
 class VaillantDeviceApiClient:
