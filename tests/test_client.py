@@ -8,7 +8,7 @@ from custom_components.vaillant_plus.client import (
     VaillantApiHub,
     ShouldUpdateConfigEntry,
 )
-from .const import CONF_USERNAME, CONF_PASSWORD, CONF_HOST, CONF_HOST_API
+from .const import MOCK_USERNAME, MOCK_PASSWORD, CONF_HOST, CONF_HOST_API
 
 
 @pytest.mark.asyncio
@@ -24,9 +24,9 @@ async def test_client(hass, aioclient_mock, caplog):
         f"{CONF_HOST}/app/user/login",
         json={"code": "200", "data": {"token": "1", "uid": "2"}},
     )
-    token = await client.login(CONF_USERNAME, CONF_PASSWORD)
-    assert token.username == CONF_USERNAME
-    assert token.password == CONF_PASSWORD
+    token = await client.login(MOCK_USERNAME, MOCK_PASSWORD)
+    assert token.username == MOCK_USERNAME
+    assert token.password == MOCK_PASSWORD
     assert token.token == "1"
     assert token.uid == "2"
 

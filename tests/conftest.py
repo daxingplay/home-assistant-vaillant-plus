@@ -14,9 +14,12 @@
 #
 # See here for more info: https://docs.pytest.org/en/latest/fixture.html (note that
 # pytest includes fixtures OOB which you can use as defined on this page)
-from unittest.mock import patch
 
 import pytest
+
+from unittest.mock import patch
+from custom_components.vaillant_plus import Token, Device
+from .const import MOCK_USERNAME, MOCK_PASSWORD
 
 pytest_plugins = "pytest_homeassistant_custom_component"
 
@@ -46,18 +49,69 @@ def skip_notifications_fixture():
 def bypass_get_data_fixture():
     """Skip calls to get data from API."""
     with patch(
-        "custom_components.vaillant-plus.IntegrationBlueprintApiClient.async_get_data"
+        "custom_components.vaillant_plus.IntegrationBlueprintApiClient.async_get_data"
     ):
         yield
 
 
-# In this fixture, we are forcing calls to async_get_data to raise an Exception. This is useful
+@pytest.fixture(name="bypass_login")
+def bypass_login_fixture():
+    """Skip calls to get data from API."""
+    with patch(
+        "custom_components.vaillant_plus.VaillantApiHub.login",
+        return_value=Token(
+            app_id="1",
+            username=MOCK_USERNAME,
+            password=MOCK_PASSWORD,
+            token="test_token",
+            uid="u1",
+        ),
+    ):
+        yield
+
+
+@pytest.fixture(name="bypass_get_device")
+def bypass_get_device_fixture():
+    """Skip calls to get data from API."""
+    with patch(
+        "custom_components.vaillant_plus.VaillantApiHub.get_device_list",
+        return_value=[
+            Device(
+                id="1",
+                mac="mac2",
+                product_key="pk",
+                product_name="pn",
+                host="127.0.0.1",
+                ws_port=8080,
+                wss_port=8081,
+                wifi_soft_version="wsv1",
+                wifi_hard_version="whv1",
+                mcu_soft_version="msv1",
+                mcu_hard_version="mhv1",
+                is_online=True,
+            )
+        ],
+    ):
+        yield
+
+
+@pytest.fixture(name="bypass_get_no_device")
+def bypass_get_no_device_fixture():
+    """Skip calls to get data from API."""
+    with patch(
+        "custom_components.vaillant_plus.VaillantApiHub.get_device_list",
+        return_value=[],
+    ):
+        yield
+
+
+# In this fixture, we are forcing calls to login to raise an Exception. This is useful
 # for exception handling.
-@pytest.fixture(name="error_on_get_data")
-def error_get_data_fixture():
+@pytest.fixture(name="error_on_login")
+def error_login_fixture():
     """Simulate error when retrieving data from API."""
     with patch(
-        "custom_components.vaillant-plus.IntegrationBlueprintApiClient.async_get_data",
+        "custom_components.vaillant_plus.VaillantApiHub.login",
         side_effect=Exception,
     ):
         yield

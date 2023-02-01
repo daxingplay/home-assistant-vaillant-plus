@@ -9,7 +9,7 @@
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
-  "dependencies": ["http"],
+  "dependencies": [],
   "codeowners": ["@daxingplay"],
   "iot_class": "cloud_push",
   "loggers": ["vaillant_plus_cn_api"]
