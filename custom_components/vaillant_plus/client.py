@@ -105,6 +105,7 @@ class VaillantDeviceApiClient:
 
         @callback
         def device_connected(device_attrs: dict[str, Any]):
+            self._device_attrs = device_attrs.copy()
             async_dispatcher_send(
                 hass, EVT_DEVICE_CONNECTED.format(device.id), device_attrs
             )
@@ -121,6 +122,19 @@ class VaillantDeviceApiClient:
 
         self._client.on_subscribe(device_connected)
         self._client.on_update(device_update)
+
+    @property
+    def client(self) -> VaillantWebsocketClient:
+        return self._client
+
+    @property
+    def device(self) -> Device:
+        return self._device
+
+    def get_device_attr(self, attr) -> Any:
+        if hasattr(self._device_attrs, attr):
+            return self._device_attrs.get(attr)
+        return None
 
     async def connect(self) -> None:
         try:

@@ -10,6 +10,8 @@ from homeassistant.helpers.entity import Entity
 from .client import VaillantDeviceApiClient
 from .const import DOMAIN, EVT_DEVICE_UPDATED
 
+from vaillant_plus_cn_api import Device
+
 UPDATE_INTERVAL = timedelta(minutes=1)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -25,6 +27,10 @@ class VaillantEntity(Entity):
         """Initialize."""
         self._client = client
 
+    @property
+    def device(self) -> Device:
+        return self._client.device
+
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
 
@@ -37,7 +43,7 @@ class VaillantEntity(Entity):
 
         self.async_on_remove(
             async_dispatcher_connect(
-                self.hass, EVT_DEVICE_UPDATED.format(self._client._device.id), update
+                self.hass, EVT_DEVICE_UPDATED.format(self.device.id), update
             )
         )
 
@@ -53,11 +59,11 @@ class VaillantEntity(Entity):
         """Return all device info available for this entity."""
 
         return {
-            "identifiers": {(DOMAIN, self._client._device.id)},
-            "name": self._client._device.model,
-            "sw_version": self._client._device.mcu_soft_version,
+            "identifiers": {(DOMAIN, self.device.id)},
+            "name": self.device.model,
+            "sw_version": self.device.mcu_soft_version,
             "manufacturer": "Vaillant",
-            "via_device": (DOMAIN, self._client._device.id),
+            "via_device": (DOMAIN, self.device.id),
         }
 
     @callback

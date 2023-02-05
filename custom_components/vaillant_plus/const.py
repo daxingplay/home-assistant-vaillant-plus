@@ -22,3 +22,6 @@ CONF_PRODUCT_NAME = "product_name"
 EVT_DEVICE_CONNECTED = "vaillant_plus_device.{}.connected"
 EVT_DEVICE_UPDATED = "vaillant_plus_device.{}.updated"
 EVT_TOKEN_UPDATED = "vaillant_plus_token.{}.updated"
+
+WATER_HEATER_ON = "on"
+WATER_HEATER_OFF = "off"
