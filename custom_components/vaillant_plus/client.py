@@ -131,10 +131,9 @@ class VaillantDeviceApiClient:
     def device(self) -> Device:
         return self._device
 
-    def get_device_attr(self, attr) -> Any:
-        if hasattr(self._device_attrs, attr):
-            return self._device_attrs.get(attr)
-        return None
+    @property
+    def device_attrs(self) -> dict[str, Any]:
+        return self._device_attrs
 
     async def connect(self) -> None:
         try:

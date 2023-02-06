@@ -8,12 +8,6 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntity,
     WaterHeaterEntityFeature,
 )
-from homeassistant.components.climate.const import (
-    PRESET_COMFORT,
-    ClimateEntityFeature,
-    HVACAction,
-    HVACMode,
-)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature, PRECISION_HALVES
 from homeassistant.core import HomeAssistant, callback
@@ -38,15 +32,10 @@ _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_TEMPERATURE_INCREASE = 0.5
 
-PRESET_SUMMER = "Summer"
-PRESET_WINTER = "Winter"
-
 SUPPORTED_FEATURES = (
     WaterHeaterEntityFeature.TARGET_TEMPERATURE
     | WaterHeaterEntityFeature.OPERATION_MODE
 )
-SUPPORTED_HVAC_MODES = [HVACMode.HEAT, HVACMode.OFF]
-SUPPORTED_PRESET_MODES = [PRESET_COMFORT]
 
 
 async def async_setup_entry(
@@ -91,13 +80,13 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     def unique_id(self) -> str:
         """Return a unique ID to use for this entity."""
 
-        return f"{self._client._device.id}_water_heater"
+        return f"{self.device.id}_water_heater"
 
     @property
     def name(self) -> str:
         """Return the name of the water heater."""
 
-        return self._client._device.product_name
+        return self.device.product_name
 
     @property
     def supported_features(self) -> int:
@@ -119,8 +108,8 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     @property
     def current_operation(self) -> str | None:
         """Return current operation ie. eco, electric, performance, ..."""
-        if hasattr(self._client._device_attrs, "Enabled_DHW"):
-            value = self._client._device_attrs["Enabled_DHW"]
+        if hasattr(self.device_attrs, "Enabled_DHW"):
+            value = self.device_attrs["Enabled_DHW"]
             if value == 1:
                 return WATER_HEATER_ON
             return WATER_HEATER_OFF
@@ -135,23 +124,23 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     def current_temperature(self) -> float:
         """Return the current dhw temperature. FIXME"""
 
-        return self._client._device_attrs["Tank_Temperature"]
+        return self.device_attrs["Tank_Temperature"]
 
     @property
     def target_temperature(self) -> float:
         """Return the targeted dhw temperature. Current_DHW_Setpoint or DHW_setpoint"""
 
-        return self._client._device_attrs["DHW_setpoint"]
+        return self.device_attrs["DHW_setpoint"]
 
     @property
     def target_temperature_high(self) -> float | None:
         """Return the highbound target temperature we try to reach."""
-        return self._client._device_attrs["Upper_Limitation_of_DHW_Setpoint"]
+        return self.device_attrs["Upper_Limitation_of_DHW_Setpoint"]
 
     @property
     def target_temperature_low(self) -> float | None:
         """Return the lowbound target temperature we try to reach."""
-        return self._client._device_attrs["Lower_Limitation_of_DHW_Setpoint"]
+        return self.device_attrs["Lower_Limitation_of_DHW_Setpoint"]
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -161,7 +150,7 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
 
         _LOGGER.debug("Setting target temperature to: %s", new_temperature)
 
-        await self._client.send_command(
+        await self.send_command(
             "DHW_setpoint",
             new_temperature,
         )
@@ -171,4 +160,17 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
         value = 1
         if operation_mode == WATER_HEATER_OFF:
             value = 0
-        await self._client.send_command("WarmStar_Tank_Loading_Enable", value)
+
+        _LOGGER.debug("Setting operation mode to: %s", value)
+
+        await self.send_command("WarmStar_Tank_Loading_Enable", value)
+
+    @property
+    def min_temp(self) -> float:
+        """Return the minimum temperature."""
+        return 35
+
+    @property
+    def max_temp(self) -> float:
+        """Return the maximum temperature."""
+        return 65

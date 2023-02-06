@@ -28,8 +28,17 @@ class VaillantEntity(Entity):
         self._client = client
 
     @property
+    def device_attrs(self) -> dict[str, Any]:
+        return self._client.device_attrs
+
+    @property
     def device(self) -> Device:
         return self._client.device
+
+    def get_device_attr(self, attr) -> Any:
+        if hasattr(self._client.device_attrs, attr):
+            return self._client.device_attrs.get(attr)
+        return None
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
@@ -47,8 +56,8 @@ class VaillantEntity(Entity):
             )
         )
 
-        if len(self._client._device_attrs) > 0:
-            self.update_from_latest_data(self._client._device_attrs)
+        if len(self.device_attrs) > 0:
+            self.update_from_latest_data(self.device_attrs)
 
     @property
     def should_poll(self) -> bool:
@@ -69,3 +78,6 @@ class VaillantEntity(Entity):
     @callback
     def update_from_latest_data(self, data: dict[str, Any]) -> None:
         """Update the entity from the latest data."""
+
+    async def send_command(self, attr: str, value: Any) -> None:
+        await self._client.send_command(attr, value)
