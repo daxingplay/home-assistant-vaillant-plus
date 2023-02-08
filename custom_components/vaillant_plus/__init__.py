@@ -103,11 +103,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         if (
-            entry.entry_id in hass.data[DOMAIN]
-            and hass.data[DOMAIN][entry.entry_id] is not None
+            entry.entry_id in hass.data[DOMAIN][WEBSOCKET_CLIENT]
+            and hass.data[DOMAIN][WEBSOCKET_CLIENT][entry.entry_id] is not None
         ):
-            await hass.data[DOMAIN][entry.entry_id].close()
-        hass.data[DOMAIN].pop(entry.entry_id)
+            await hass.data[DOMAIN][WEBSOCKET_CLIENT][entry.entry_id].close()
+        hass.data[DOMAIN][WEBSOCKET_CLIENT].pop(entry.entry_id)
 
     device_id = entry.data.get(CONF_DID)
     dispatchers = hass.data[DOMAIN][DISPATCHERS].pop(device_id)

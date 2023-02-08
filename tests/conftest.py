@@ -17,7 +17,7 @@
 
 import pytest
 
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from custom_components.vaillant_plus import Token, Device
 from .const import MOCK_USERNAME, MOCK_PASSWORD
 
@@ -105,6 +105,32 @@ def bypass_get_no_device_fixture():
         yield
 
 
+@pytest.fixture(name="bypass_get_device_info")
+def bypass_get_device_info_fixture():
+    """Skip calls to get data from API."""
+    with patch(
+        "custom_components.vaillant_plus.VaillantApiHub.get_device",
+        return_value=Device(
+            id="1",
+            mac="mac2",
+            product_key="pk",
+            product_name="pn",
+            host="127.0.0.1",
+            ws_port=8080,
+            wss_port=8081,
+            wifi_soft_version="wsv1",
+            wifi_hard_version="whv1",
+            mcu_soft_version="msv1",
+            mcu_hard_version="mhv1",
+            is_online=True,
+            model="test_model",
+            sno="test_sno",
+            serial_number="test_sn",
+        ),
+    ):
+        yield
+
+
 # In this fixture, we are forcing calls to login to raise an Exception. This is useful
 # for exception handling.
 @pytest.fixture(name="error_on_login")
@@ -115,3 +141,28 @@ def error_login_fixture():
         side_effect=Exception,
     ):
         yield
+
+
+@pytest.fixture(name="device_api_client")
+def mock_device_api_client(hass):
+    device_api_client = Mock(
+        hass=hass,
+        device=Device(
+            id="1",
+            mac="mac2",
+            product_key="pk",
+            product_name="pn",
+            host="127.0.0.1",
+            ws_port=8080,
+            wss_port=8081,
+            wifi_soft_version="wsv1",
+            wifi_hard_version="whv1",
+            mcu_soft_version="msv1",
+            mcu_hard_version="mhv1",
+            is_online=True,
+            model="test_model",
+            sno="test_sno",
+            serial_number="test_sn",
+        ),
+    )
+    yield device_api_client

@@ -163,7 +163,7 @@ class VaillantBinarySensorEntity(VaillantEntity, BinarySensorEntity):
     @property
     def unique_id(self) -> str | None:
         """Return a unique ID."""
-        return f"{self._client._device.mac}_{self.entity_description.key}"
+        return f"{self.device.mac}_{self.entity_description.key}"
 
     @callback
     def update_from_latest_data(self, data: dict[str, Any]) -> None:
@@ -178,4 +178,4 @@ class VaillantBinarySensorEntity(VaillantEntity, BinarySensorEntity):
         elif self.entity_description.key == "Boiler_info5_bit4":
             self._attr_is_on = value[0] == 1
         else:
-            self._attr_is_on = value == True
+            self._attr_is_on = value is True
