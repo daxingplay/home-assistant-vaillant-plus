@@ -101,7 +101,7 @@ class VaillantDeviceApiClient:
             device,
             session=aiohttp_client.async_get_clientsession(self._hass),
         )
-        self._device_attrs = {}
+        self._device_attrs: dict[str, Any] = {}
 
         @callback
         def device_connected(device_attrs: dict[str, Any]):

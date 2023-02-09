@@ -53,9 +53,14 @@ async def async_setup_entry(
     def async_new_climate(device_attrs: dict[str, Any]):
         _LOGGER.debug("New climate found")
         if "climate" not in added_entities:
-            new_devices = [VaillantClimate(client)]
-            async_add_devices(new_devices)
-            added_entities.append("climate")
+            if device_attrs.get("Enabled_Heating") is not None:
+                new_devices = [VaillantClimate(client)]
+                async_add_devices(new_devices)
+                added_entities.append("climate")
+            else:
+                _LOGGER.warning(
+                    "Missing required attribute to setup Vaillant Climate. skip."
+                )
         else:
             _LOGGER.debug("Already added climate device. skip.")
 
@@ -79,13 +84,13 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
     def unique_id(self) -> str:
         """Return a unique ID to use for this entity."""
 
-        return self._client._device.id
+        return self.device.id
 
     @property
     def name(self) -> str:
         """Return the name of the climate."""
 
-        return self._client._device.product_name
+        return self.device.product_name
 
     @property
     def supported_features(self) -> int:
@@ -103,13 +108,13 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
     def current_temperature(self) -> float:
         """Return the current room temperature."""
 
-        return self._client._device_attrs["Room_Temperature"]
+        return self.get_device_attr("Room_Temperature")
 
     @property
     def target_temperature(self) -> float:
         """Return the targeted room temperature."""
 
-        return self._client._device_attrs["Room_Temperature_Setpoint_Comfort"]
+        return self.get_device_attr("Room_Temperature_Setpoint_Comfort")
 
     @property
     def hvac_modes(self) -> list[HVACMode]:
@@ -124,7 +129,7 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         """
 
         # TODO whether support HVACMode.AUTO
-        if self._client._device_attrs["Enabled_Heating"]:
+        if self.get_device_attr("Enabled_Heating"):
             return HVACMode.HEAT
 
         return HVACMode.OFF
@@ -135,13 +140,12 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         Return the currently running HVAC action.
         """
 
-        if not self._client._device_attrs["Enabled_Heating"]:
+        if not self.get_device_attr("Enabled_Heating"):
             return HVACAction.OFF
 
         try:
-            if (
-                self._client._device_attrs["Room_Temperature"]
-                < self._client._device_attrs["Room_Temperature_Setpoint_Comfort"]
+            if self.get_device_attr("Room_Temperature") < self.get_device_attr(
+                "Room_Temperature_Setpoint_Comfort"
             ):
                 return HVACAction.HEATING
         except TypeError:

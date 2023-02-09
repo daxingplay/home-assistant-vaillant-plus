@@ -36,7 +36,7 @@ class VaillantEntity(Entity):
         return self._client.device
 
     def get_device_attr(self, attr) -> Any:
-        if hasattr(self._client.device_attrs, attr):
+        if self._client.device_attrs.get(attr) is not None:
             return self._client.device_attrs.get(attr)
         return None
 

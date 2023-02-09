@@ -52,11 +52,16 @@ async def async_setup_entry(
 
     @callback
     def async_new_water_heater(device_attrs: dict[str, Any]):
-        _LOGGER.debug("New water heater found")
+        _LOGGER.debug("New water heater found, %s", device_attrs)
         if "water_heater" not in added_entities:
-            new_devices = [VaillantWaterHeater(client)]
-            async_add_devices(new_devices)
-            added_entities.append("water_heater")
+            if device_attrs.get("DHW_setpoint") is not None:
+                new_devices = [VaillantWaterHeater(client)]
+                async_add_devices(new_devices)
+                added_entities.append("water_heater")
+            else:
+                _LOGGER.warning(
+                    "Missing required attribute to setup Vaillant Water Heater. skip."
+                )
         else:
             _LOGGER.debug("Already added water_heater device. skip.")
 
@@ -108,12 +113,12 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     @property
     def current_operation(self) -> str | None:
         """Return current operation ie. eco, electric, performance, ..."""
-        if hasattr(self.device_attrs, "Enabled_DHW"):
-            value = self.device_attrs["Enabled_DHW"]
-            if value == 1:
-                return WATER_HEATER_ON
-            return WATER_HEATER_OFF
-        return None
+        value = self.get_device_attr("Enabled_DHW")
+        if value is None:
+            return None
+        elif value == 1:
+            return WATER_HEATER_ON
+        return WATER_HEATER_OFF
 
     @property
     def operation_list(self) -> list[str] | None:
@@ -124,23 +129,23 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     def current_temperature(self) -> float:
         """Return the current dhw temperature. FIXME"""
 
-        return self.device_attrs["Tank_Temperature"]
+        return self.get_device_attr("Tank_Temperature")
 
     @property
     def target_temperature(self) -> float:
         """Return the targeted dhw temperature. Current_DHW_Setpoint or DHW_setpoint"""
 
-        return self.device_attrs["DHW_setpoint"]
+        return self.get_device_attr("DHW_setpoint")
 
     @property
     def target_temperature_high(self) -> float | None:
         """Return the highbound target temperature we try to reach."""
-        return self.device_attrs["Upper_Limitation_of_DHW_Setpoint"]
+        return self.get_device_attr("Upper_Limitation_of_DHW_Setpoint")
 
     @property
     def target_temperature_low(self) -> float | None:
         """Return the lowbound target temperature we try to reach."""
-        return self.device_attrs["Lower_Limitation_of_DHW_Setpoint"]
+        return self.get_device_attr("Lower_Limitation_of_DHW_Setpoint")
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -168,9 +173,9 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     @property
     def min_temp(self) -> float:
         """Return the minimum temperature."""
-        return 35
+        return self.get_device_attr("Lower_Limitation_of_DHW_Setpoint")
 
     @property
     def max_temp(self) -> float:
         """Return the maximum temperature."""
-        return 65
+        return self.get_device_attr("Upper_Limitation_of_DHW_Setpoint")
