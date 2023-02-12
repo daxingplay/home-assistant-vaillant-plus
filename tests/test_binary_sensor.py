@@ -1,4 +1,4 @@
-"""Test vaillant-plus switch."""
+"""Test vaillant-plus binary_sensor."""
 from unittest.mock import call, patch
 
 from homeassistant.components.binary_sensor import (

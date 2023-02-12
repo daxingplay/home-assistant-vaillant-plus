@@ -10,6 +10,12 @@ from homeassistant.const import (
     STATE_ON,
     STATE_OFF,
 )
+from homeassistant.components.climate.const import (
+    PRESET_COMFORT,
+    ClimateEntityFeature,
+    HVACAction,
+    HVACMode,
+)
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -26,8 +32,14 @@ from custom_components.vaillant_plus.const import (
     EVT_DEVICE_CONNECTED,
     EVT_DEVICE_UPDATED,
 )
+from vaillant_plus_cn_api import EVT_DEVICE_ATTR_UPDATE
 
-from .const import MOCK_CONFIG_ENTRY_DATA, MOCK_DID, MOCK_DEVICE_ATTRS_WHEN_CONNECT
+from .const import (
+    MOCK_CONFIG_ENTRY_DATA,
+    MOCK_DID,
+    MOCK_DEVICE_ATTRS_WHEN_CONNECT,
+    MOCK_DEVICE_ATTRS_WHEN_UPDATE,
+)
 
 
 async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_get_device_info):
@@ -85,6 +97,25 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_get_devic
         assert state_climate.state == STATE_OFF
         assert state_climate.attributes.get("hvac_action") == STATE_OFF
         assert state_climate.attributes.get("current_temperature") == 20.5
+
+        # Test whether entities handle correctly when connect event triggered again
+        client._on_subscribe_handler(MOCK_DEVICE_ATTRS_WHEN_CONNECT)
+
+        # Test update event
+        client._on_update_handler(
+            EVT_DEVICE_ATTR_UPDATE, {"data": MOCK_DEVICE_ATTRS_WHEN_UPDATE}
+        )
+        state_water_heater = hass.states.get("water_heater.pn")
+        assert state_water_heater.attributes.get(ATTR_TEMPERATURE) == 46.0
+        assert state_water_heater.attributes.get("min_temp") == 35.0
+        assert state_water_heater.attributes.get("max_temp") == 65.0
+        assert state_water_heater.attributes.get("target_temp_low") == 35.0
+        assert state_water_heater.attributes.get("target_temp_high") == 65.0
+
+        state_climate = hass.states.get("climate.pn")
+        assert state_climate.state == "heat"
+        assert state_climate.attributes.get("hvac_action") == HVACAction.HEATING
+        assert state_climate.attributes.get("current_temperature") == 11.5
 
         with patch(
             "custom_components.vaillant_plus.VaillantDeviceApiClient.close"

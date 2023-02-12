@@ -8,6 +8,14 @@ from custom_components.vaillant_plus.client import (
     VaillantApiHub,
     ShouldUpdateConfigEntry,
 )
+from vaillant_plus_cn_api import (
+    VaillantApiClient,
+    VaillantWebsocketClient,
+    Token,
+    Device,
+    InvalidAuthError,
+    EVT_DEVICE_ATTR_UPDATE,
+)
 from .const import MOCK_USERNAME, MOCK_PASSWORD, CONF_HOST, CONF_HOST_API
 
 
@@ -98,46 +106,22 @@ async def test_client(hass, aioclient_mock, caplog):
         await client.get_device(token, "2")
 
 
-# @pytest.mark.asyncio
-# async def test_client_invalid_auth(hass, aioclient_mock, caplog):
-#     """Test API calls."""
+@pytest.mark.asyncio
+async def test_client_invalid_auth(
+    hass, aioclient_mock, invalid_auth_on_device_list, caplog
+):
+    """Test API calls."""
 
-#     client = VaillantApiHub(hass=hass)
+    client = VaillantApiHub(hass=hass, retry_interval=0)
 
-#     aioclient_mock.post(
-#         f"{CONF_HOST}/app/user/login",
-#         json={"code": "200", "data": {"token": "1", "uid": "2"}},
-#     )
+    aioclient_mock.post(
+        f"{CONF_HOST}/app/user/login",
+        json={"code": "200", "data": {"token": "1", "uid": "2"}},
+    )
 
-#     aioclient_mock.get(
-#         f"{CONF_HOST_API}/app/bindings",
-#         json={
-#             "error_message": "token invalid!",
-#             "error_code": 9004,
-#             "detail_message": None,
-#         },
-#     )
+    with pytest.raises(ShouldUpdateConfigEntry):
+        await client.get_device(Token("a1", "u1", "p1"), "1")
 
-#     aioclient_mock.get(
-#         f"{CONF_HOST}/app/device/sn/status",
-#         json={
-#             "code": "200",
-#             "data": {
-#                 "gizDid": "1",
-#                 "mac": "12345678abcd",
-#                 "model": "model_test",
-#                 "serialNumber": "2",
-#                 "sno": "3",
-#                 "status": 1,
-#             },
-#             "display": None,
-#             "message": "本次请求成功!",
-#         },
-#     )
-
-#     token = await client.login(CONF_USERNAME, CONF_PASSWORD)
-#     device = await client.get_device(token, "1")
-#     assert device.id == "1"
 
 # In order to get 100% coverage, we need to test `api_wrapper` to test the code
 # that isn't already called by `async_get_data` and `async_set_title`. Because the

@@ -32,12 +32,13 @@ class VaillantApiHub:
     TODO Remove this placeholder class and replace with things from your PyPI package.
     """
 
-    def __init__(self, hass: HomeAssistant) -> None:
+    def __init__(self, hass: HomeAssistant, *, retry_interval: int = 3) -> None:
         """Initialize."""
         self._hass = hass
         self._api_client = VaillantApiClient(
             session=aiohttp_client.async_get_clientsession(self._hass)
         )
+        self._retry_interval = retry_interval
 
     async def login(self, username: str, password: str) -> Token:
         """Login to get uid and token."""
@@ -56,8 +57,12 @@ class VaillantApiHub:
         device_list: list[Device] = []
         device: Device | None = None
         succeed = False
+        retry_times = 0
 
         while not succeed:
+            if retry_times > 3:
+                raise ShouldUpdateConfigEntry
+
             try:
                 device_list = await self.get_device_list(token.token)
                 for item in device_list:
@@ -80,7 +85,8 @@ class VaillantApiHub:
                     self._hass, EVT_TOKEN_UPDATED.format(token.username), token_new
                 )
                 succeed = False
-                await asyncio.sleep(3)
+                retry_times += 1
+                await asyncio.sleep(self._retry_interval)
 
 
 class VaillantDeviceApiClient:

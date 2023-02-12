@@ -18,7 +18,20 @@
 import pytest
 
 from unittest.mock import patch, Mock
-from custom_components.vaillant_plus import Token, Device
+from custom_components.vaillant_plus import (
+    Token,
+    Device,
+    VaillantApiHub,
+    VaillantDeviceApiClient,
+)
+from vaillant_plus_cn_api import (
+    VaillantApiClient,
+    VaillantWebsocketClient,
+    Token,
+    Device,
+    InvalidAuthError,
+    EVT_DEVICE_ATTR_UPDATE,
+)
 from .const import MOCK_USERNAME, MOCK_PASSWORD
 
 pytest_plugins = "pytest_homeassistant_custom_component"
@@ -143,10 +156,24 @@ def error_login_fixture():
         yield
 
 
+# In this fixture, we are forcing calls to get device list to raise an InvalidAuthError Exception.
+@pytest.fixture(name="invalid_auth_on_device_list")
+def error_invaild_auth_when_get_device_list_fixture():
+    """Simulate error when retrieving data from API."""
+    with patch(
+        "custom_components.vaillant_plus.VaillantApiHub.get_device_list",
+        side_effect=InvalidAuthError,
+    ):
+        yield
+
+
+# Mock VaillantDeviceApiClient
 @pytest.fixture(name="device_api_client")
-def mock_device_api_client(hass):
-    device_api_client = Mock(
+def device_api_client_fixture(hass):
+    device_api_client = VaillantDeviceApiClient(
         hass=hass,
+        hub=VaillantApiHub(hass=hass),
+        token=Token("a1", "u1", "p1"),
         device=Device(
             id="1",
             mac="mac2",
