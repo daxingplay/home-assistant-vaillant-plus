@@ -12,6 +12,28 @@
 
 Home Assistant custom component for controlling vSmart in Vaillant+ cn app.
 
+## Installation
+
+### Pre-requirements
+- You need connect your Vaillant vSmart device through Vaillant+([iOS](https://apps.apple.com/cn/app/%E5%A8%81%E7%AE%A1%E5%AE%B6/id1465568192) | Android ) App.
+
+### Installation Methods
+#### HACS
+Add custom repository `daxingplay/home-assistant-vaillant-plus` in HACS.
+
+#### Manual
+Copy `custom_components/vaillant_plus` into your Home Assistant `config` directory.
+
+### Post installation steps
+- Restart HA
+- Search for this integration in `Settings -> Devices & Services`
+- Click `Add integration` and search for `Vaillant Plus`
+- Click `Configure` in Vaillant Plus integration to start config flow
+- Enter your username and password for the Vaillant+ App
+- If login successfully, select the proper Vaillant vSmart device from the list
+- All done
+
+
 ***
 
 [vaillant-plus]: https://github.com/daxingplay/home-assistant-vaillant-plus
