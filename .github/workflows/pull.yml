@@ -53,3 +53,10 @@ jobs:
             -o console_output_style=count \
             -p no:sugar \
             tests
+          coverage lcov
+      - name: Upload Coverage Results
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          path-to-lcov: coverage.lcov
+
