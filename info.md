@@ -1,5 +1,6 @@
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
+[![Coverage][coverage-shield]][coverage]
 [![License][license-shield]][license]
 
 [![hacs][hacsbadge]][hacs]
@@ -43,6 +44,8 @@ Platform | Description
 [commits]: https://github.com/daxingplay/home-assistant-vaillant-plus/commits/master
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
+[coverage-shield]: https://img.shields.io/coverallsCoverage/github/daxingplay/home-assistant-vaillant-plus?style=for-the-badge
+[coverage]: https://coveralls.io/github/daxingplay/home-assistant-vaillant-plus?branch=master
 [exampleimg]: example.png
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://github.com/daxingplay/home-assistant-vaillant-plus/issues
