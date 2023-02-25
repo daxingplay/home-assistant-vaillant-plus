@@ -21,8 +21,6 @@ from .client import VaillantDeviceApiClient
 from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, WEBSOCKET_CLIENT
 from .entity import VaillantEntity
 
-# from .entity import VaillantCoordinator, VaillantEntity
-
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_TEMPERATURE_INCREASE = 0.5
@@ -84,7 +82,7 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
     def unique_id(self) -> str:
         """Return a unique ID to use for this entity."""
 
-        return self.device.id
+        return f"{self.device.id}_climate"
 
     @property
     def name(self) -> str:

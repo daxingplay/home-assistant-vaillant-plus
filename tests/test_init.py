@@ -1,44 +1,30 @@
 """Test vaillant-plus switch."""
-from unittest.mock import call, patch
+from unittest.mock import patch
 
-from homeassistant.core import HomeAssistant
+from homeassistant.components.climate.const import HVACAction
 from homeassistant.const import (
-    ATTR_ENTITY_ID,
     ATTR_FRIENDLY_NAME,
-    ATTR_NAME,
     ATTR_TEMPERATURE,
-    STATE_ON,
     STATE_OFF,
+    STATE_ON,
 )
-from homeassistant.components.climate.const import (
-    PRESET_COMFORT,
-    ClimateEntityFeature,
-    HVACAction,
-    HVACMode,
-)
-from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+from vaillant_plus_cn_api import EVT_DEVICE_ATTR_UPDATE
 
 from custom_components.vaillant_plus import (
+    VaillantDeviceApiClient,
     async_setup,
     async_setup_entry,
     async_unload_entry,
-    VaillantDeviceApiClient,
 )
-from custom_components.vaillant_plus.const import (
-    DOMAIN,
-    DISPATCHERS,
-    WEBSOCKET_CLIENT,
-    EVT_DEVICE_CONNECTED,
-    EVT_DEVICE_UPDATED,
-)
-from vaillant_plus_cn_api import EVT_DEVICE_ATTR_UPDATE
+from custom_components.vaillant_plus.const import DISPATCHERS, DOMAIN, WEBSOCKET_CLIENT
 
 from .const import (
     MOCK_CONFIG_ENTRY_DATA,
-    MOCK_DID,
     MOCK_DEVICE_ATTRS_WHEN_CONNECT,
     MOCK_DEVICE_ATTRS_WHEN_UPDATE,
+    MOCK_DID,
 )
 
 

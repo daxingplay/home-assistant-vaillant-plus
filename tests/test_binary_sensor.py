@@ -1,20 +1,12 @@
 """Test vaillant-plus binary_sensor."""
-from unittest.mock import call, patch
 
-from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
-)
-from homeassistant.const import ATTR_ENTITY_ID
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.helpers.entity import EntityCategory
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.vaillant_plus.binary_sensor import (
-    VaillantBinarySensorEntity,
     VaillantBinarySensorDescription,
+    VaillantBinarySensorEntity,
 )
-from custom_components.vaillant_plus.const import DOMAIN
-
-from .const import MOCK_CONFIG_ENTRY_DATA, MOCK_DID
 
 
 async def test_binary_sensor_heating_enabled(device_api_client):
@@ -30,7 +22,7 @@ async def test_binary_sensor_heating_enabled(device_api_client):
         ),
     )
 
-    assert binary_sensor.unique_id == "mac2_Heating_Enable"
+    assert binary_sensor.unique_id == "1_Heating_Enable"
 
     binary_sensor.update_from_latest_data({"Heating_Enable": True})
     assert binary_sensor.is_on is True
@@ -52,7 +44,7 @@ async def test_binary_sensor_rf_status(device_api_client):
         ),
     )
 
-    assert binary_sensor.unique_id == "mac2_RF_Status"
+    assert binary_sensor.unique_id == "1_RF_Status"
 
     binary_sensor.update_from_latest_data({"RF_Status": 3})
     assert binary_sensor.is_on is True
@@ -77,7 +69,7 @@ async def test_binary_sensor_boiler_info3_bit0(device_api_client):
         ),
     )
 
-    assert binary_sensor.unique_id == "mac2_Boiler_info3_bit0"
+    assert binary_sensor.unique_id == "1_Boiler_info3_bit0"
 
     binary_sensor.update_from_latest_data({"Boiler_info3_bit0": [1]})
     assert binary_sensor.is_on is True
@@ -102,7 +94,7 @@ async def test_binary_sensor_boiler_info5_bit4(device_api_client):
         ),
     )
 
-    assert binary_sensor.unique_id == "mac2_Boiler_info5_bit4"
+    assert binary_sensor.unique_id == "1_Boiler_info5_bit4"
 
     binary_sensor.update_from_latest_data({"Boiler_info5_bit4": [1]})
     assert binary_sensor.is_on is True

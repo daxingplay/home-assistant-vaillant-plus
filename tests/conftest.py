@@ -15,24 +15,17 @@
 # See here for more info: https://docs.pytest.org/en/latest/fixture.html (note that
 # pytest includes fixtures OOB which you can use as defined on this page)
 
-import pytest
+from unittest.mock import patch
 
-from unittest.mock import patch, Mock
+import pytest
+from vaillant_plus_cn_api import Device, InvalidAuthError, Token
+
 from custom_components.vaillant_plus import (
-    Token,
-    Device,
     VaillantApiHub,
     VaillantDeviceApiClient,
 )
-from vaillant_plus_cn_api import (
-    VaillantApiClient,
-    VaillantWebsocketClient,
-    Token,
-    Device,
-    InvalidAuthError,
-    EVT_DEVICE_ATTR_UPDATE,
-)
-from .const import MOCK_USERNAME, MOCK_PASSWORD
+
+from .const import MOCK_PASSWORD, MOCK_USERNAME
 
 pytest_plugins = "pytest_homeassistant_custom_component"
 

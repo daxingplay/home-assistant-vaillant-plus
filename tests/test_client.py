@@ -1,22 +1,13 @@
 """Tests for vaillant-plus client."""
-import asyncio
 import pytest
-import aiohttp
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from vaillant_plus_cn_api import Token
 
 from custom_components.vaillant_plus.client import (
-    VaillantApiHub,
     ShouldUpdateConfigEntry,
+    VaillantApiHub,
 )
-from vaillant_plus_cn_api import (
-    VaillantApiClient,
-    VaillantWebsocketClient,
-    Token,
-    Device,
-    InvalidAuthError,
-    EVT_DEVICE_ATTR_UPDATE,
-)
-from .const import MOCK_USERNAME, MOCK_PASSWORD, CONF_HOST, CONF_HOST_API
+
+from .const import CONF_HOST, CONF_HOST_API, MOCK_PASSWORD, MOCK_USERNAME
 
 
 @pytest.mark.asyncio

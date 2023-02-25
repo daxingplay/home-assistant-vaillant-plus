@@ -9,7 +9,7 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature, PRECISION_HALVES
+from homeassistant.const import ATTR_TEMPERATURE, PRECISION_HALVES, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -20,9 +20,9 @@ from .const import (
     DISPATCHERS,
     DOMAIN,
     EVT_DEVICE_CONNECTED,
-    WEBSOCKET_CLIENT,
-    WATER_HEATER_ON,
     WATER_HEATER_OFF,
+    WATER_HEATER_ON,
+    WEBSOCKET_CLIENT,
 )
 from .entity import VaillantEntity
 
@@ -116,7 +116,7 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
         value = self.get_device_attr("Enabled_DHW")
         if value is None:
             return None
-        elif value == 1:
+        if value == 1:
             return WATER_HEATER_ON
         return WATER_HEATER_OFF
 

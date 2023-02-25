@@ -4,24 +4,17 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
-
-from vaillant_plus_cn_api import Token, Device
+from vaillant_plus_cn_api import Device, Token
+import voluptuous as vol
 
 from .client import VaillantApiHub
 from .const import (
     CONF_DID,
-    CONF_HOST,
-    CONF_MAC,
     CONF_PASSWORD,
-    CONF_PORT,
-    CONF_PRODUCT_NAME,
     CONF_TOKEN,
-    CONF_UID,
     CONF_USERNAME,
     DOMAIN,
 )

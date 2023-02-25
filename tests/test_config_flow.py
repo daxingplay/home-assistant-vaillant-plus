@@ -4,17 +4,13 @@ from unittest.mock import patch
 from homeassistant import config_entries, data_entry_flow
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
-
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.vaillant_plus.const import (
-    DOMAIN,
-    CONF_DID,
-    CONF_TOKEN,
-)
+from custom_components.vaillant_plus.const import CONF_DID, CONF_TOKEN, DOMAIN
 
 from .const import MOCK_INPUT
+
 
 # This fixture bypasses the actual setup of the integration
 # since we only want to test the config flow. We test the

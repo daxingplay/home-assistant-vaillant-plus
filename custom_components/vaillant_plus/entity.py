@@ -6,11 +6,10 @@ from typing import Any
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
+from vaillant_plus_cn_api import Device
 
 from .client import VaillantDeviceApiClient
 from .const import DOMAIN, EVT_DEVICE_UPDATED
-
-from vaillant_plus_cn_api import Device
 
 UPDATE_INTERVAL = timedelta(minutes=1)
 
@@ -48,7 +47,7 @@ class VaillantEntity(Entity):
             """Update the state."""
             _LOGGER.debug("write ha state: %s", data)
             self.update_from_latest_data(data)
-            self.async_write_ha_state()
+            self.async_schedule_update_ha_state()
 
         self.async_on_remove(
             async_dispatcher_connect(
@@ -72,7 +71,7 @@ class VaillantEntity(Entity):
             "name": self.device.model,
             "sw_version": self.device.mcu_soft_version,
             "manufacturer": "Vaillant",
-            "via_device": (DOMAIN, self.device.id),
+            # "via_device": (DOMAIN, self.device.id),
         }
 
     @callback
@@ -80,4 +79,5 @@ class VaillantEntity(Entity):
         """Update the entity from the latest data."""
 
     async def send_command(self, attr: str, value: Any) -> None:
+        """Send operations to cloud."""
         await self._client.send_command(attr, value)

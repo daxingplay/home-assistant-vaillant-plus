@@ -2,24 +2,21 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
-import json
 import logging
 from typing import Any
-
-from vaillant_plus_cn_api import (
-    VaillantApiClient,
-    VaillantWebsocketClient,
-    Token,
-    Device,
-    InvalidAuthError,
-    EVT_DEVICE_ATTR_UPDATE,
-)
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers.dispatcher import async_dispatcher_send
+from vaillant_plus_cn_api import (
+    EVT_DEVICE_ATTR_UPDATE,
+    Device,
+    InvalidAuthError,
+    Token,
+    VaillantApiClient,
+    VaillantWebsocketClient,
+)
 
 from .const import EVT_DEVICE_CONNECTED, EVT_DEVICE_UPDATED, EVT_TOKEN_UPDATED
 
@@ -27,10 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class VaillantApiHub:
-    """Placeholder class to make tests pass.
-
-    TODO Remove this placeholder class and replace with things from your PyPI package.
-    """
+    """API hub for authentication to the cloud."""
 
     def __init__(self, hass: HomeAssistant, *, retry_interval: int = 3) -> None:
         """Initialize."""
@@ -90,6 +84,8 @@ class VaillantApiHub:
 
 
 class VaillantDeviceApiClient:
+    """Client to connect to device's cloud websocket endpoint."""
+
     def __init__(
         self,
         hass: HomeAssistant,
@@ -142,6 +138,7 @@ class VaillantDeviceApiClient:
         return self._device_attrs
 
     async def connect(self) -> None:
+        """Connect to cloud. Try to retrieve a new token if token expires."""
         try:
             await self._client.listen()
         except InvalidAuthError:
@@ -157,12 +154,14 @@ class VaillantDeviceApiClient:
             return await self.connect()
 
     async def send_command(self, attr: str, value: Any) -> None:
+        """Send command about operations for a device to the cloud."""
         if self._client is not None:
             await self._client.send_command(
                 "c2s_write", {"did": self._device.id, "attrs": {f"{attr}": value}}
             )
 
     async def close(self):
+        """Close connection to cloud."""
         if self._client is not None:
             await self._client.close()
 

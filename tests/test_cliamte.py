@@ -1,30 +1,9 @@
 """Test vaillant-plus climate."""
-from unittest.mock import call, patch
+from unittest.mock import patch
 
-from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
-)
-from homeassistant.const import ATTR_ENTITY_ID
-from homeassistant.helpers.entity import EntityCategory
-from homeassistant.components.climate.const import (
-    PRESET_COMFORT,
-    PRESET_ECO,
-    ClimateEntityFeature,
-    HVACAction,
-    HVACMode,
-)
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-from custom_components.vaillant_plus.client import (
-    VaillantDeviceApiClient,
-    VaillantApiHub,
-)
-from custom_components.vaillant_plus.climate import (
-    VaillantClimate,
-)
-from custom_components.vaillant_plus.const import DOMAIN
-from vaillant_plus_cn_api import Token, Device
+from homeassistant.components.climate.const import PRESET_COMFORT, PRESET_ECO, HVACMode
 
-from .const import MOCK_CONFIG_ENTRY_DATA, MOCK_DID
+from custom_components.vaillant_plus.climate import VaillantClimate
 
 
 async def test_climate_actions(hass, device_api_client):
@@ -33,7 +12,7 @@ async def test_climate_actions(hass, device_api_client):
         device_api_client,
     )
 
-    assert climate.unique_id == "1"
+    assert climate.unique_id == "1_climate"
     assert climate.should_poll is False
     assert climate.name == "pn"
 

@@ -1,3 +1,4 @@
+"""Vaillant sensors."""
 from __future__ import annotations
 
 import logging
@@ -24,67 +25,67 @@ _LOGGER = logging.getLogger(__name__)
 SENSOR_DESCRIPTIONS = (
     SensorEntityDescription(
         key="Room_Temperature_Setpoint_Comfort",
-        name="Room Temperature Setpoint(Comfort)",
+        name="Room temperature setpoint of comfort mode",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="Room_Temperature_Setpoint_ECO",
-        name="Room Temperature Setpoint(ECO)",
+        name="Room temperature setpoint of ECO mode",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="Outdoor_Temperature",
-        name="Outdoor Temperature",
+        name="Outdoor temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="Room_Temperature",
-        name="Room Temperature",
+        name="Room temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="DHW_setpoint",
-        name="Domestic Hot Water Setpoint",
+        name="Domestic hot water setpoint",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="Lower_Limitation_of_CH_Setpoint",
-        name="Lower Limitation of Central Heating Setpoint",
+        name="Lower limitation of central heating setpoint",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="Upper_Limitation_of_CH_Setpoint",
-        name="Upper Limitation of Central Heating Setpoint",
+        name="Upper limitation of central heating setpoint",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="Lower_Limitation_of_DHW_Setpoint",
-        name="Lower Limitation of Domestic Hot Water",
+        name="Lower limitation of domestic hot water",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="Upper_Limitation_of_DHW_Setpoint",
-        name="Upper Limitation of Domestic Hot Water",
+        name="Upper limitation of domestic hot water",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="Current_DHW_Setpoint",
-        name="Current Domestic Hot Water Setpoint",
+        name="Current domestic hot water setpoint",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="Flow_Temperature_Setpoint",
-        name="Flow Temperature Setpoint",
+        name="Flow temperature setpoint",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
@@ -96,13 +97,13 @@ SENSOR_DESCRIPTIONS = (
     ),
     SensorEntityDescription(
         key="return_temperature",
-        name="Return Flow temperature",
+        name="Return flow temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key="Tank_temperature",
-        name="Water Tank temperature",
+        name="Water tank temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
@@ -158,7 +159,7 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
     @property
     def unique_id(self) -> str | None:
         """Return a unique ID."""
-        return f"{self._client._device.mac}_{self.entity_description.key}"
+        return f"{self.device.id}_{self.entity_description.key}"
 
     @callback
     def update_from_latest_data(self, data: dict[str, Any]) -> None:

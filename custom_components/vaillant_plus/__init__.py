@@ -1,40 +1,22 @@
 """The Vaillant Plus integration."""
 from __future__ import annotations
 
-from typing import Any
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform, EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.typing import ConfigType
-
-from vaillant_plus_cn_api import (
-    VaillantApiClient,
-    VaillantWebsocketClient,
-    Token,
-    Device,
-    InvalidAuthError,
-    EVT_DEVICE_ATTR_UPDATE,
-)
+from vaillant_plus_cn_api import Token
 
 from .client import VaillantApiHub, VaillantDeviceApiClient
 from .const import (
     API_HUB,
     CONF_DID,
-    CONF_HOST,
-    CONF_MAC,
-    CONF_PASSWORD,
-    CONF_PORT,
     CONF_TOKEN,
-    CONF_UID,
-    CONF_USERNAME,
     DISPATCHERS,
     DOMAIN,
-    EVT_DEVICE_CONNECTED,
-    EVT_DEVICE_UPDATED,
     EVT_TOKEN_UPDATED,
     WEBSOCKET_CLIENT,
 )

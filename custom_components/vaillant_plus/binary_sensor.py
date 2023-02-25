@@ -53,28 +53,28 @@ BINARY_SENSOR_DESCRIPTIONS = (
     ),
     VaillantBinarySensorDescription(
         key="WarmStar_Tank_Loading_Enable",
-        name="WarmStar Tank Loading",
+        name="WarmStar tank loading",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
         on_state=True,
     ),
     VaillantBinarySensorDescription(
         key="Enabled_Heating",
-        name="Heating Boiler",
+        name="Heating boiler",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
         on_state=True,
     ),
     VaillantBinarySensorDescription(
         key="Enabled_DHW",
-        name="DHW",
+        name="Domestic hot water",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
         on_state=True,
     ),
     VaillantBinarySensorDescription(
         key="BMU_Platform",
-        name="BMU Platform",
+        name="BMU platform",
         # device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
         on_state=True,
@@ -88,7 +88,7 @@ BINARY_SENSOR_DESCRIPTIONS = (
     ),
     VaillantBinarySensorDescription(
         key="RF_Status",
-        name="EBus Status",
+        name="EBus status",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         entity_category=EntityCategory.DIAGNOSTIC,
         on_state=True,
@@ -163,7 +163,7 @@ class VaillantBinarySensorEntity(VaillantEntity, BinarySensorEntity):
     @property
     def unique_id(self) -> str | None:
         """Return a unique ID."""
-        return f"{self.device.mac}_{self.entity_description.key}"
+        return f"{self.device.id}_{self.entity_description.key}"
 
     @callback
     def update_from_latest_data(self, data: dict[str, Any]) -> None:
