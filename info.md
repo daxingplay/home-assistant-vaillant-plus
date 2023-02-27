@@ -20,7 +20,9 @@ Platform | Description
 `climate` | Control your vaillant boiler for heating.
 `water_heater` | Control your vaillant water heater.
 
-![example][exampleimg]
+## Screenshot
+
+![screenshot](docs/images/screenshot-all.jpg)
 
 {% if not installed %}
 ## Installation

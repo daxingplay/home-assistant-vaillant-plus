@@ -2,6 +2,8 @@
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
 [![Coverage][coverage-shield]][coverage]
+![GitHub all releases][download-all]
+![GitHub release (latest by SemVer)][download-latest]
 [![License][license-shield]][license]
 
 [![hacs][hacsbadge]][hacs]
@@ -11,6 +13,10 @@
 [![Community Forum][forum-shield]][forum]
 
 Home Assistant custom component for controlling vSmart in Vaillant+ cn app.
+
+## Screenshot
+
+![screenshot](docs/images/screenshot-all.jpg)
 
 ## Installation
 
@@ -33,6 +39,10 @@ Copy `custom_components/vaillant_plus` into your Home Assistant `config` directo
 - If login successfully, select the proper Vaillant vSmart device from the list
 - All done
 
+## Contributions are welcome!
+If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
+
+Component built with integration_blueprint.
 
 ***
 
@@ -54,3 +64,5 @@ Copy `custom_components/vaillant_plus` into your Home Assistant `config` directo
 [releases-shield]: https://img.shields.io/github/release/daxingplay/home-assistant-vaillant-plus.svg?style=flat-square
 [releases]: https://github.com/daxingplay/home-assistant-vaillant-plus/releases
 [user_profile]: https://github.com/daxingplay
+[download-all]: https://img.shields.io/github/downloads/daxingplay/home-assistant-vaillant-plus/total?style=flat-square
+[download-latest]: https://img.shields.io/github/downloads/daxingplay/home-assistant-vaillant-plus/latest/total?style=flat-square
