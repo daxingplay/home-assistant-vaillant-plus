@@ -1,5 +1,5 @@
 {
     "name": "Vaillant Plus",
     "hacs": "1.6.0",
-    "homeassistant": "2022.12.0"
+    "homeassistant": "2022.11.3"
 }
