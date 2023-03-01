@@ -85,10 +85,10 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         return f"{self.device.id}_climate"
 
     @property
-    def name(self) -> str:
+    def name(self) -> str | None:
         """Return the name of the climate."""
 
-        return self.device.product_name
+        return None
 
     @property
     def supported_features(self) -> int:

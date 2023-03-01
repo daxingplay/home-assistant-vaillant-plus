@@ -88,10 +88,10 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
         return f"{self.device.id}_water_heater"
 
     @property
-    def name(self) -> str:
+    def name(self) -> str | None:
         """Return the name of the water heater."""
 
-        return self.device.product_name
+        return None
 
     @property
     def supported_features(self) -> int:

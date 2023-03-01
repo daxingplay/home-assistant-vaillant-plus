@@ -71,7 +71,9 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_get_devic
         )
         assert state_binary_sensor_heating.state == STATE_OFF
 
-        state_water_heater = hass.states.get("water_heater.pn")
+        state_water_heater = hass.states.get(
+            "water_heater.vaillant_plus_1_water_heater"
+        )
         assert state_water_heater.state == STATE_ON
         assert state_water_heater.attributes.get(ATTR_TEMPERATURE) == 45.0
         assert state_water_heater.attributes.get("min_temp") == 35.0
@@ -79,7 +81,7 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_get_devic
         assert state_water_heater.attributes.get("target_temp_low") == 35.0
         assert state_water_heater.attributes.get("target_temp_high") == 65.0
 
-        state_climate = hass.states.get("climate.pn")
+        state_climate = hass.states.get("climate.vaillant_plus_1_climate")
         assert state_climate.state == STATE_OFF
         assert state_climate.attributes.get("hvac_action") == STATE_OFF
         assert state_climate.attributes.get("current_temperature") == 20.5
@@ -91,14 +93,16 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_get_devic
         client._on_update_handler(
             EVT_DEVICE_ATTR_UPDATE, {"data": MOCK_DEVICE_ATTRS_WHEN_UPDATE}
         )
-        state_water_heater = hass.states.get("water_heater.pn")
+        state_water_heater = hass.states.get(
+            "water_heater.vaillant_plus_1_water_heater"
+        )
         assert state_water_heater.attributes.get(ATTR_TEMPERATURE) == 46.0
         assert state_water_heater.attributes.get("min_temp") == 35.0
         assert state_water_heater.attributes.get("max_temp") == 65.0
         assert state_water_heater.attributes.get("target_temp_low") == 35.0
         assert state_water_heater.attributes.get("target_temp_high") == 65.0
 
-        state_climate = hass.states.get("climate.pn")
+        state_climate = hass.states.get("climate.vaillant_plus_1_climate")
         assert state_climate.state == "heat"
         assert state_climate.attributes.get("hvac_action") == HVACAction.HEATING
         assert state_climate.attributes.get("current_temperature") == 11.5

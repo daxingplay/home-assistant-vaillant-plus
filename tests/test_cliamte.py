@@ -14,7 +14,7 @@ async def test_climate_actions(hass, device_api_client):
 
     assert climate.unique_id == "1_climate"
     assert climate.should_poll is False
-    assert climate.name == "pn"
+    assert climate.name is None
 
     with patch(
         "custom_components.vaillant_plus.VaillantDeviceApiClient.send_command"

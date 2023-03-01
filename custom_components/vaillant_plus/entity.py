@@ -5,7 +5,7 @@ from typing import Any
 
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import Entity, DeviceInfo
 from vaillant_plus_cn_api import Device
 
 from .client import VaillantDeviceApiClient
@@ -63,16 +63,17 @@ class VaillantEntity(Entity):
         return False
 
     @property
-    def device_info(self) -> dict[str, Any]:
+    def device_info(self) -> DeviceInfo:
         """Return all device info available for this entity."""
 
-        return {
-            "identifiers": {(DOMAIN, self.device.id)},
-            "name": self.device.model,
-            "sw_version": self.device.mcu_soft_version,
-            "manufacturer": "Vaillant",
-            # "via_device": (DOMAIN, self.device.id),
-        }
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.device.id)},
+            name=self.device.product_name,
+            model=self.device.model,
+            sw_version=self.device.mcu_soft_version,
+            hw_version=self.device.mcu_hard_version,
+            manufacturer="Vaillant",
+        )
 
     @callback
     def update_from_latest_data(self, data: dict[str, Any]) -> None:
