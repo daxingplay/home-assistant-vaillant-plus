@@ -9,7 +9,7 @@
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/daxingplay/home-assistant-vaillant-plus/issues",
   "loggers": ["vaillant_plus_cn_api"],
-  "requirements": ["vaillant-plus-cn-api==0.3.3"],
+  "requirements": ["vaillant-plus-cn-api==0.3.4"],
   "ssdp": [],
   "version": "0.1.0",
   "zeroconf": []

@@ -56,7 +56,9 @@ class VaillantPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         hub = VaillantApiHub(self.hass)
 
         try:
-            user_info = await hub.login(user_input["username"], user_input["password"])
+            user_info = await hub.login(
+                user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
+            )
         except Exception:
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "invalid_auth"
