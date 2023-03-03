@@ -58,7 +58,7 @@ Component built with integration_blueprint.
 [exampleimg]: example.png
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=flat-square
 [forum]: https://github.com/daxingplay/home-assistant-vaillant-plus/issues
-[license]: https://github.com/daxingplay/home-assistant-vaillant-plus/blob/main/LICENSE
+[license]: https://github.com/daxingplay/home-assistant-vaillant-plus/blob/master/LICENSE
 [license-shield]: https://img.shields.io/github/license/daxingplay/home-assistant-vaillant-plus.svg?style=flat-square
 [maintenance-shield]: https://img.shields.io/badge/maintainer-daxingplay-blue.svg?style=flat-square
 [releases-shield]: https://img.shields.io/github/release/daxingplay/home-assistant-vaillant-plus.svg?style=flat-square
