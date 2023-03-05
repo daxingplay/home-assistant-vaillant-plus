@@ -2,12 +2,10 @@ name: Push actions
 
 on:
   pull_request:
-    branches:
-      - master
   push:
-    branches:
-      - master
-      - dev
+  schedule:
+    - cron:  '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   validate:
@@ -20,7 +18,6 @@ jobs:
           uses: "hacs/action@main"
           with:
             category: "integration"
-            ignore: brands
 
         - name: Hassfest validation
           uses: "home-assistant/actions/hassfest@master"
