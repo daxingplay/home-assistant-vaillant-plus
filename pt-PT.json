@@ -1,0 +1,27 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Equipamento já configurado"
+        },
+        "error": {
+            "cannot_connect": "Falha na ligação",
+            "invalid_auth": "Falha na autenticação",
+            "unknown": "Erro desconhecido"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "host": "host",
+                    "password": "Password",
+                    "username": "Utilizador"
+                }
+            },
+            "select": {
+                "data": {
+                    "select_device": "Equipamento Vaillant"
+                },
+                "description": "Selecione o equipamento Vaillant que quer configurar."
+            }
+        }
+    }
+}
