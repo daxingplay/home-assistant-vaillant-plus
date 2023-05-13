@@ -1,0 +1,27 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "设备已经注册"
+        },
+        "error": {
+            "cannot_connect": "无法连接服务器",
+            "invalid_auth": "验证失败",
+            "unknown": "位置错误"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "host": "主机",
+                    "password": "密码",
+                    "username": "用户名"
+                }
+            },
+            "select": {
+                "data": {
+                    "select_device": "威能设备"
+                },
+                "description": "选择威能壁挂炉完成设置"
+            }
+        }
+    }
+}
