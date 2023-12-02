@@ -2,8 +2,11 @@
 
 <!--next-version-placeholder-->
 ## v0.6.0 (2023-05-13)
+* Refactor to use new API. Resolve [#5](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/5)
+
+## v0.6.0 (2023-05-13)
 ### Others
-* Re-tag to match HACS requirements. 
+* Re-tag to match HACS requirements.
 
 ## v0.5.1 (2023-05-13)
 ### Bug
