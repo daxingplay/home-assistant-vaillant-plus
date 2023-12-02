@@ -5,7 +5,6 @@ API_HUB = "hub"
 WEBSOCKET_CLIENT = "websockets"
 DISPATCHERS = "dispatchers"
 
-HOST_APP = "https://appapi.vaillant.com.cn"
 HOST_API = "https://api.vaillant.com.cn"
 
 

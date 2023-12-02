@@ -42,23 +42,20 @@ class VaillantApiHub:
         """Get device list."""
         return await self._api_client.get_device_list(token)
 
-    async def get_device_info(self, token: str, mac_addr: str) -> dict[str, str]:
-        """Get device info"""
-        upper_mac = str.upper(mac_addr)
-        return await self._api_client.get_device_info(token, upper_mac)
-
     async def get_device(self, token: Token, device_id: str) -> Device:
         device_list: list[Device] = []
         device: Device | None = None
         succeed = False
         retry_times = 0
 
+        token_used = token
+
         while not succeed:
             if retry_times > 3:
                 raise ShouldUpdateConfigEntry
 
             try:
-                device_list = await self.get_device_list(token.token)
+                device_list = await self.get_device_list(token_used.token)
                 for item in device_list:
                     if item.id == device_id:
                         device = item
@@ -67,14 +64,11 @@ class VaillantApiHub:
                 if device is None:
                     raise ShouldUpdateConfigEntry
 
-                device_info = await self.get_device_info(token.token, device.mac)
-                device.model = device_info["model"]
-                device.sno = device_info["sno"]
-                device.serial_number = device_info["serial_number"]
                 succeed = True
                 return device
             except InvalidAuthError:
-                token_new = await self.login(token.username, token.password)
+                token_new = await self.login(token_used.username, token_used.password)
+                token_used = token_new
                 async_dispatcher_send(
                     self._hass, EVT_TOKEN_UPDATED.format(token.username), token_new
                 )
@@ -98,32 +92,8 @@ class VaillantDeviceApiClient:
         self._hass = hass
         self._device = device
         self._token = token
-        self._client: VaillantWebsocketClient = VaillantWebsocketClient(
-            token,
-            device,
-            session=aiohttp_client.async_get_clientsession(self._hass),
-        )
         self._device_attrs: dict[str, Any] = {}
-
-        @callback
-        def device_connected(device_attrs: dict[str, Any]):
-            self._device_attrs = device_attrs.copy()
-            async_dispatcher_send(
-                hass, EVT_DEVICE_CONNECTED.format(device.id), device_attrs
-            )
-
-        @callback
-        def device_update(event: str, data: dict[str, Any]):
-            if event == EVT_DEVICE_ATTR_UPDATE:
-                device_attrs = data.get("data", {})
-                if len(device_attrs) > 0:
-                    self._device_attrs = device_attrs.copy()
-                    async_dispatcher_send(
-                        hass, EVT_DEVICE_UPDATED.format(device.id), self._device_attrs
-                    )
-
-        self._client.on_subscribe(device_connected)
-        self._client.on_update(device_update)
+        self._client: VaillantWebsocketClient = self._init_client(token)
 
     @property
     def client(self) -> VaillantWebsocketClient:
@@ -137,6 +107,42 @@ class VaillantDeviceApiClient:
     def device_attrs(self) -> dict[str, Any]:
         return self._device_attrs
 
+    async def _init_client(self, token: Token) -> VaillantWebsocketClient:
+        client = VaillantWebsocketClient(
+            token,
+            self._device,
+            session=aiohttp_client.async_get_clientsession(self._hass),
+        )
+
+        @callback
+        def device_connected(device_attrs: dict[str, Any]):
+            self._device_attrs = device_attrs.copy()
+            async_dispatcher_send(
+                self._hass, EVT_DEVICE_CONNECTED.format(self._device.id), device_attrs
+            )
+
+        @callback
+        def device_update(event: str, data: dict[str, Any]):
+            if event == EVT_DEVICE_ATTR_UPDATE:
+                device_attrs = data.get("data", {})
+                if len(device_attrs) > 0:
+                    self._device_attrs = device_attrs.copy()
+                    async_dispatcher_send(
+                        self._hass, EVT_DEVICE_UPDATED.format(self._device.id), self._device_attrs
+                    )
+
+        self._client.on_subscribe(device_connected)
+        client.on_update(device_update)
+        return client
+
+    async def update_token(self, token: Token) -> None:
+        if not Token.equals(self._token, token):
+            await self.close()
+            self._token = token
+            self._client = self._init_client(token)
+            await asyncio.sleep(5)
+            await self.connect()
+
     async def connect(self) -> None:
         """Connect to cloud. Try to retrieve a new token if token expires."""
         try:
@@ -145,20 +151,15 @@ class VaillantDeviceApiClient:
             token_new = await self._hub.login(
                 self._token.username, self._token.password
             )
-            self._token = token_new
-            self._client._token = token_new
             async_dispatcher_send(
                 self._hass, EVT_TOKEN_UPDATED.format(token_new.username), token_new
             )
-            await asyncio.sleep(5)
-            return await self.connect()
+            return self.update_token(token_new)
 
     async def send_command(self, attr: str, value: Any) -> None:
         """Send command about operations for a device to the cloud."""
-        if self._client is not None:
-            await self._client.send_command(
-                "c2s_write", {"did": self._device.id, "attrs": {f"{attr}": value}}
-            )
+        if self._hub is not None:
+            await self._hub.control_device(self._device.id, attr, value)
 
     async def close(self):
         """Close connection to cloud."""
