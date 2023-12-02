@@ -34,13 +34,21 @@ class VaillantApiHub:
         )
         self._retry_interval = retry_interval
 
+    def update_token(self, token: Token) -> None:
+        """Update token."""
+        self._api_client.update_token(token)
+
     async def login(self, username: str, password: str) -> Token:
         """Login to get uid and token."""
         return await self._api_client.login(username=username, password=password)
 
-    async def get_device_list(self, token: str) -> list[Device]:
+    async def get_device_list(self) -> list[Device]:
         """Get device list."""
-        return await self._api_client.get_device_list(token)
+        return await self._api_client.get_device_list()
+
+    async def control_device(self, device_id, attr, value) -> None:
+        """Send command to control device."""
+        return await self._api_client.control_device(device_id, attr, value)
 
     async def get_device(self, token: Token, device_id: str) -> Device:
         device_list: list[Device] = []
@@ -49,13 +57,14 @@ class VaillantApiHub:
         retry_times = 0
 
         token_used = token
+        self.update_token(token_used)
 
         while not succeed:
             if retry_times > 3:
                 raise ShouldUpdateConfigEntry
 
             try:
-                device_list = await self.get_device_list(token_used.token)
+                device_list = await self.get_device_list()
                 for item in device_list:
                     if item.id == device_id:
                         device = item
@@ -68,6 +77,7 @@ class VaillantApiHub:
                 return device
             except InvalidAuthError:
                 token_new = await self.login(token_used.username, token_used.password)
+                self.update_token(token_new)
                 token_used = token_new
                 async_dispatcher_send(
                     self._hass, EVT_TOKEN_UPDATED.format(token.username), token_new
@@ -107,7 +117,7 @@ class VaillantDeviceApiClient:
     def device_attrs(self) -> dict[str, Any]:
         return self._device_attrs
 
-    async def _init_client(self, token: Token) -> VaillantWebsocketClient:
+    def _init_client(self, token: Token) -> VaillantWebsocketClient:
         client = VaillantWebsocketClient(
             token,
             self._device,
@@ -131,7 +141,7 @@ class VaillantDeviceApiClient:
                         self._hass, EVT_DEVICE_UPDATED.format(self._device.id), self._device_attrs
                     )
 
-        self._client.on_subscribe(device_connected)
+        client.on_subscribe(device_connected)
         client.on_update(device_update)
         return client
 
@@ -142,6 +152,8 @@ class VaillantDeviceApiClient:
             self._client = self._init_client(token)
             await asyncio.sleep(5)
             await self.connect()
+        else:
+            _LOGGER.info("Token is not changed.")
 
     async def connect(self) -> None:
         """Connect to cloud. Try to retrieve a new token if token expires."""
@@ -154,7 +166,6 @@ class VaillantDeviceApiClient:
             async_dispatcher_send(
                 self._hass, EVT_TOKEN_UPDATED.format(token_new.username), token_new
             )
-            return self.update_token(token_new)
 
     async def send_command(self, attr: str, value: Any) -> None:
         """Send command about operations for a device to the cloud."""
@@ -164,7 +175,11 @@ class VaillantDeviceApiClient:
     async def close(self):
         """Close connection to cloud."""
         if self._client is not None:
-            await self._client.close()
+            try:
+                await self._client.close()
+            except Exception as error:
+                _LOGGER.exception(error)
+                pass
 
 
 class InvalidAuth(HomeAssistantError):

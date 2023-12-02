@@ -70,8 +70,8 @@ class VaillantEntity(Entity):
             identifiers={(DOMAIN, self.device.id)},
             name=self.device.product_name,
             model=self.device.model,
-            sw_version=self.device.mcu_soft_version,
-            hw_version=self.device.mcu_hard_version,
+            # sw_version=self.device.mcu_soft_version,
+            # hw_version=self.device.mcu_hard_version,
             manufacturer="Vaillant",
         )
 

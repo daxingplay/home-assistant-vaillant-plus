@@ -53,8 +53,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.config_entries.async_update_entry(
             entry, data={**entry.data, CONF_TOKEN: token_new.serialize()}
         )
+        # update hub token
+        hub.update_token(token_new)
         # should update VaillantDeviceApiClient
-        if hass.data[DOMAIN][WEBSOCKET_CLIENT][entry.entry_id] is not None:
+        if entry.entry_id in hass.data[DOMAIN][WEBSOCKET_CLIENT]:
             hass.loop.create_task(hass.data[DOMAIN][WEBSOCKET_CLIENT][entry.entry_id].update_token(token_new))
 
     unsub = async_dispatcher_connect(
@@ -91,7 +93,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.entry_id in hass.data[DOMAIN][WEBSOCKET_CLIENT]
             and hass.data[DOMAIN][WEBSOCKET_CLIENT][entry.entry_id] is not None
         ):
-            await hass.data[DOMAIN][WEBSOCKET_CLIENT][entry.entry_id].close()
+            try:
+                await hass.data[DOMAIN][WEBSOCKET_CLIENT][entry.entry_id].close()
+            except:
+                pass
         hass.data[DOMAIN][WEBSOCKET_CLIENT].pop(entry.entry_id)
 
     device_id = entry.data.get(CONF_DID)

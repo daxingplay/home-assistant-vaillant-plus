@@ -134,4 +134,8 @@ dmypy.json
 .idea
 .DS_Store
 
+# Home Assistant configuration
+config/*
+!config/configuration.yaml
+
 integration_example

@@ -64,7 +64,7 @@ class VaillantPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors["base"] = "invalid_auth"
         else:
             self._cloud_token = user_info
-            device_list = await hub.get_device_list(user_info.token)
+            device_list = await hub.get_device_list()
             if len(device_list) == 0:
                 errors["base"] = "no_devices"
             else:
