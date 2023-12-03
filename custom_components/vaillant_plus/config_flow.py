@@ -7,10 +7,14 @@ from typing import Any
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
-from vaillant_plus_cn_api import Device, Token
+from homeassistant.helpers import aiohttp_client
+from vaillant_plus_cn_api import (
+    Device,
+    Token,
+    VaillantApiClient,
+)
 import voluptuous as vol
 
-from .client import VaillantApiHub
 from .const import (
     CONF_DID,
     CONF_PASSWORD,
@@ -53,10 +57,12 @@ class VaillantPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         errors = {}
 
-        hub = VaillantApiHub(self.hass)
+        client = VaillantApiClient(
+            session=aiohttp_client.async_get_clientsession(self.hass)
+        )
 
         try:
-            user_info = await hub.login(
+            user_info = await client.login(
                 user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
             )
         except Exception:
@@ -64,7 +70,7 @@ class VaillantPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors["base"] = "invalid_auth"
         else:
             self._cloud_token = user_info
-            device_list = await hub.get_device_list()
+            device_list = await client.get_device_list()
             if len(device_list) == 0:
                 errors["base"] = "no_devices"
             else:

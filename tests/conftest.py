@@ -20,11 +20,7 @@ from unittest.mock import patch
 import pytest
 from vaillant_plus_cn_api import Device, InvalidAuthError, Token
 
-from custom_components.vaillant_plus import (
-    VaillantApiHub,
-    VaillantDeviceApiClient,
-)
-
+from custom_components.vaillant_plus import VaillantClient
 from .const import MOCK_PASSWORD, MOCK_USERNAME
 
 pytest_plugins = "pytest_homeassistant_custom_component"
@@ -55,7 +51,7 @@ def skip_notifications_fixture():
 def bypass_get_data_fixture():
     """Skip calls to get data from API."""
     with patch(
-        "custom_components.vaillant_plus.IntegrationBlueprintApiClient.async_get_data"
+        "custom_components.vaillant_plus.VaillantClient.async_get_data"
     ):
         yield
 
@@ -64,12 +60,12 @@ def bypass_get_data_fixture():
 def bypass_login_fixture():
     """Skip calls to get data from API."""
     with patch(
-        "custom_components.vaillant_plus.VaillantApiHub.login",
+        "vaillant_plus_cn_api.VaillantApiClient.login",
         return_value=Token(
             app_id="1",
             username=MOCK_USERNAME,
             password=MOCK_PASSWORD,
-            token="test_token",
+            access_token="test_token",
             uid="u1",
         ),
     ):
@@ -80,21 +76,25 @@ def bypass_login_fixture():
 def bypass_get_device_fixture():
     """Skip calls to get data from API."""
     with patch(
-        "custom_components.vaillant_plus.VaillantApiHub.get_device_list",
+        "vaillant_plus_cn_api.VaillantApiClient.get_device_list",
         return_value=[
             Device(
                 id="1",
                 mac="mac2",
                 product_key="pk",
+                product_id="p1",
                 product_name="pn",
-                host="127.0.0.1",
-                ws_port=8080,
-                wss_port=8081,
-                wifi_soft_version="wsv1",
-                wifi_hard_version="whv1",
-                mcu_soft_version="msv1",
-                mcu_hard_version="mhv1",
+                product_verbose_name="pvn",
                 is_online=True,
+                is_manager=True,
+                group_id=2,
+                sno="sno",
+                create_time="2000-01-01 00:00:00",
+                last_offline_time="2000-12-31 00:00:00",
+                model_alias="weijingling",
+                model="model_name",
+                serial_number="s1",
+                services_count=0,
             )
         ],
     ):
@@ -105,34 +105,8 @@ def bypass_get_device_fixture():
 def bypass_get_no_device_fixture():
     """Skip calls to get data from API."""
     with patch(
-        "custom_components.vaillant_plus.VaillantApiHub.get_device_list",
+        "vaillant_plus_cn_api.VaillantApiClient.get_device_list",
         return_value=[],
-    ):
-        yield
-
-
-@pytest.fixture(name="bypass_get_device_info")
-def bypass_get_device_info_fixture():
-    """Skip calls to get data from API."""
-    with patch(
-        "custom_components.vaillant_plus.VaillantApiHub.get_device",
-        return_value=Device(
-            id="1",
-            mac="mac2",
-            product_key="pk",
-            product_name="pn",
-            host="127.0.0.1",
-            ws_port=8080,
-            wss_port=8081,
-            wifi_soft_version="wsv1",
-            wifi_hard_version="whv1",
-            mcu_soft_version="msv1",
-            mcu_hard_version="mhv1",
-            is_online=True,
-            model="test_model",
-            sno="test_sno",
-            serial_number="test_sn",
-        ),
     ):
         yield
 
@@ -143,7 +117,7 @@ def bypass_get_device_info_fixture():
 def error_login_fixture():
     """Simulate error when retrieving data from API."""
     with patch(
-        "custom_components.vaillant_plus.VaillantApiHub.login",
+        "custom_components.vaillant_plus.VaillantClient._connect",
         side_effect=Exception,
     ):
         yield
@@ -154,7 +128,7 @@ def error_login_fixture():
 def error_invaild_auth_when_get_device_list_fixture():
     """Simulate error when retrieving data from API."""
     with patch(
-        "custom_components.vaillant_plus.VaillantApiHub.get_device_list",
+        "custom_components.vaillant_plus.VaillantClient.get_device_list",
         side_effect=InvalidAuthError,
     ):
         yield
@@ -163,26 +137,27 @@ def error_invaild_auth_when_get_device_list_fixture():
 # Mock VaillantDeviceApiClient
 @pytest.fixture(name="device_api_client")
 def device_api_client_fixture(hass):
-    device_api_client = VaillantDeviceApiClient(
+    device_api_client = VaillantClient(
         hass=hass,
-        hub=VaillantApiHub(hass=hass),
         token=Token("a1", "u1", "p1"),
-        device=Device(
-            id="1",
-            mac="mac2",
-            product_key="pk",
-            product_name="pn",
-            host="127.0.0.1",
-            ws_port=8080,
-            wss_port=8081,
-            wifi_soft_version="wsv1",
-            wifi_hard_version="whv1",
-            mcu_soft_version="msv1",
-            mcu_hard_version="mhv1",
-            is_online=True,
-            model="test_model",
-            sno="test_sno",
-            serial_number="test_sn",
-        ),
+        device_id="1",
+    )
+    device_api_client._device = Device(
+        id="1",
+        mac="mac2",
+        product_key="pk",
+        product_id="p1",
+        product_name="pn",
+        product_verbose_name="pvn",
+        is_online=True,
+        is_manager=True,
+        group_id=2,
+        sno="sno",
+        create_time="2000-01-01 00:00:00",
+        last_offline_time="2000-12-31 00:00:00",
+        model_alias="weijingling",
+        model="model_name",
+        serial_number="s1",
+        services_count=0,
     )
     yield device_api_client

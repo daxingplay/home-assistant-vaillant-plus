@@ -17,7 +17,7 @@ async def test_climate_actions(hass, device_api_client):
     assert climate.name is None
 
     with patch(
-        "custom_components.vaillant_plus.VaillantDeviceApiClient.send_command"
+        "custom_components.vaillant_plus.VaillantClient.control_device"
     ) as send_command_func:
         await climate.async_set_temperature()
         send_command_func.assert_not_called()
@@ -44,11 +44,11 @@ async def test_climate_actions(hass, device_api_client):
         await climate.async_set_hvac_mode(HVACMode.OFF)
         send_command_func.assert_awaited_with(
             "Heating_Enable",
-            False,
+            0,
         )
 
         await climate.async_set_hvac_mode(HVACMode.HEAT)
         send_command_func.assert_awaited_with(
             "Heating_Enable",
-            True,
+            1,
         )
