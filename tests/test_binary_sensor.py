@@ -18,16 +18,16 @@ async def test_binary_sensor_heating_enabled(device_api_client):
             name="Heating",
             device_class=BinarySensorDeviceClass.RUNNING,
             entity_category=EntityCategory.DIAGNOSTIC,
-            on_state=True,
+            on_state=1,
         ),
     )
 
     assert binary_sensor.unique_id == "1_Heating_Enable"
 
-    binary_sensor.update_from_latest_data({"Heating_Enable": True})
+    binary_sensor.update_from_latest_data({"Heating_Enable": 1})
     assert binary_sensor.is_on is True
 
-    binary_sensor.update_from_latest_data({"Heating_Enable": False})
+    binary_sensor.update_from_latest_data({"Heating_Enable": 0})
     assert binary_sensor.is_on is False
 
 
@@ -40,7 +40,7 @@ async def test_binary_sensor_rf_status(device_api_client):
             name="EBus Status",
             device_class=BinarySensorDeviceClass.CONNECTIVITY,
             entity_category=EntityCategory.DIAGNOSTIC,
-            on_state=True,
+            on_state=3,
         ),
     )
 
@@ -71,13 +71,13 @@ async def test_binary_sensor_boiler_info3_bit0(device_api_client):
 
     assert binary_sensor.unique_id == "1_Boiler_info3_bit0"
 
-    binary_sensor.update_from_latest_data({"Boiler_info3_bit0": [1]})
+    binary_sensor.update_from_latest_data({"Boiler_info3_bit0": "10"})
     assert binary_sensor.is_on is True
 
-    binary_sensor.update_from_latest_data({"Boiler_info3_bit0": [2]})
+    binary_sensor.update_from_latest_data({"Boiler_info3_bit0": "00"})
     assert binary_sensor.is_on is False
 
-    binary_sensor.update_from_latest_data({"Boiler_info3_bit0": [0, 2, 3]})
+    binary_sensor.update_from_latest_data({"Boiler_info3_bit0": "000"})
     assert binary_sensor.is_on is False
 
 
@@ -96,11 +96,11 @@ async def test_binary_sensor_boiler_info5_bit4(device_api_client):
 
     assert binary_sensor.unique_id == "1_Boiler_info5_bit4"
 
-    binary_sensor.update_from_latest_data({"Boiler_info5_bit4": [1]})
+    binary_sensor.update_from_latest_data({"Boiler_info5_bit4": "10"})
     assert binary_sensor.is_on is True
 
-    binary_sensor.update_from_latest_data({"Boiler_info5_bit4": [2]})
+    binary_sensor.update_from_latest_data({"Boiler_info5_bit4": "00"})
     assert binary_sensor.is_on is False
 
-    binary_sensor.update_from_latest_data({"Boiler_info5_bit4": [0, 2, 3]})
+    binary_sensor.update_from_latest_data({"Boiler_info5_bit4": "000"})
     assert binary_sensor.is_on is False

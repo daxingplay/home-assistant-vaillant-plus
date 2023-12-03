@@ -17,8 +17,8 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .client import VaillantDeviceApiClient
-from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, WEBSOCKET_CLIENT
+from .client import VaillantClient
+from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, API_CLIENT
 from .entity import VaillantEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ async def async_setup_entry(
     """Set up Vaillant devices from a config entry."""
 
     device_id = entry.data.get(CONF_DID)
-    client: VaillantDeviceApiClient = hass.data[DOMAIN][WEBSOCKET_CLIENT][
+    client: VaillantClient = hass.data[DOMAIN][API_CLIENT][
         entry.entry_id
     ]
 
@@ -127,7 +127,7 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         """
 
         # TODO whether support HVACMode.AUTO
-        if self.get_device_attr("Enabled_Heating"):
+        if self.get_device_attr("Enabled_Heating") == 1:
             return HVACMode.HEAT
 
         return HVACMode.OFF
@@ -138,7 +138,7 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         Return the currently running HVAC action.
         """
 
-        if not self.get_device_attr("Enabled_Heating"):
+        if self.get_device_attr("Enabled_Heating") == 0:
             return HVACAction.OFF
 
         try:
@@ -169,14 +169,14 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         _LOGGER.debug("Setting HVAC mode to: %s", hvac_mode)
 
         if hvac_mode == HVACMode.OFF:
-            await self._client.send_command(
+            await self._client.control_device(
                 "Heating_Enable",
-                False,
+                0,
             )
         elif hvac_mode == HVACMode.HEAT:
-            await self._client.send_command(
+            await self._client.control_device(
                 "Heating_Enable",
-                True,
+                1,
             )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
@@ -195,7 +195,7 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
 
         _LOGGER.debug("Setting target temperature to: %s", new_temperature)
 
-        await self._client.send_command(
+        await self._client.control_device(
             "Room_Temperature_Setpoint_Comfort",
             new_temperature,
         )

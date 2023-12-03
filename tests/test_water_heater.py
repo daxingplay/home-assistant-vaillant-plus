@@ -16,7 +16,7 @@ async def test_water_heater_actions(hass, device_api_client):
     assert water_heater.name is None
 
     with patch(
-        "custom_components.vaillant_plus.VaillantDeviceApiClient.send_command"
+        "custom_components.vaillant_plus.VaillantClient.control_device"
     ) as send_command_func:
         await water_heater.async_set_temperature()
         send_command_func.assert_not_called()

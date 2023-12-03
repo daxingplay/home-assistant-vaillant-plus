@@ -15,8 +15,8 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .client import VaillantDeviceApiClient
-from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, WEBSOCKET_CLIENT
+from .client import VaillantClient
+from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, API_CLIENT
 from .entity import VaillantEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,56 +42,56 @@ BINARY_SENSOR_DESCRIPTIONS = (
         name="Circulation",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=True,
+        on_state=1,
     ),
     VaillantBinarySensorDescription(
         key="Heating_Enable",
         name="Heating",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=True,
+        on_state=1,
     ),
     VaillantBinarySensorDescription(
         key="WarmStar_Tank_Loading_Enable",
         name="WarmStar tank loading",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=True,
+        on_state=1,
     ),
     VaillantBinarySensorDescription(
         key="Enabled_Heating",
         name="Heating boiler",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=True,
+        on_state=1,
     ),
     VaillantBinarySensorDescription(
         key="Enabled_DHW",
         name="Domestic hot water",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=True,
+        on_state=1,
     ),
     VaillantBinarySensorDescription(
         key="BMU_Platform",
         name="BMU platform",
         # device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=True,
+        on_state=1,
     ),
     VaillantBinarySensorDescription(
         key="Weather_compensation",
         name="Weather compensation",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=True,
+        on_state=1,
     ),
     VaillantBinarySensorDescription(
         key="RF_Status",
         name="EBus status",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=True,
+        on_state=3,
     ),
     VaillantBinarySensorDescription(
         key="Boiler_info3_bit0",
@@ -115,7 +115,7 @@ async def async_setup_entry(
 ) -> bool:
     """Set up Vaillant binary sensors."""
     device_id = entry.data.get(CONF_DID)
-    client: VaillantDeviceApiClient = hass.data[DOMAIN][WEBSOCKET_CLIENT][
+    client: VaillantClient = hass.data[DOMAIN][API_CLIENT][
         entry.entry_id
     ]
 
@@ -154,7 +154,7 @@ class VaillantBinarySensorEntity(VaillantEntity, BinarySensorEntity):
 
     def __init__(
         self,
-        client: VaillantDeviceApiClient,
+        client: VaillantClient,
         description: VaillantBinarySensorDescription,
     ):
         super().__init__(client)
@@ -174,8 +174,10 @@ class VaillantBinarySensorEntity(VaillantEntity, BinarySensorEntity):
         if self.entity_description.key == "RF_Status":
             self._attr_is_on = value == 3
         elif self.entity_description.key == "Boiler_info3_bit0":
-            self._attr_is_on = value[0] == 1
+            self._attr_is_on = value.startswith("1")
         elif self.entity_description.key == "Boiler_info5_bit4":
-            self._attr_is_on = value[0] == 1
+            self._attr_is_on = value.startswith("1")
+        elif self.entity_description.on_state is not None:
+            self._attr_is_on = value == self.entity_description.on_state
         else:
             self._attr_is_on = value is True

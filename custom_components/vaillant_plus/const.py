@@ -1,11 +1,8 @@
 """Constants for the Vaillant Plus integration."""
 
 DOMAIN = "vaillant_plus"
-API_HUB = "hub"
-WEBSOCKET_CLIENT = "websockets"
+API_CLIENT = "client"
 DISPATCHERS = "dispatchers"
-
-HOST_API = "https://api.vaillant.com.cn"
 
 
 CONF_USERNAME = "username"

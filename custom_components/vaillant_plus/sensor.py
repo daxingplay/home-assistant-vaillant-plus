@@ -15,8 +15,8 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .client import VaillantDeviceApiClient
-from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, WEBSOCKET_CLIENT
+from .client import VaillantClient
+from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, API_CLIENT
 from .entity import VaillantEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -115,7 +115,7 @@ async def async_setup_entry(
 ) -> bool:
     """Set up Vaillant sensors."""
     device_id = entry.data.get(CONF_DID)
-    client: VaillantDeviceApiClient = hass.data[DOMAIN][WEBSOCKET_CLIENT][
+    client: VaillantClient = hass.data[DOMAIN][API_CLIENT][
         entry.entry_id
     ]
 
@@ -150,7 +150,7 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
 
     def __init__(
         self,
-        client: VaillantDeviceApiClient,
+        client: VaillantClient,
         description: SensorEntityDescription,
     ):
         super().__init__(client)

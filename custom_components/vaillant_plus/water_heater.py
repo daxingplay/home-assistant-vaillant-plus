@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .client import VaillantDeviceApiClient
+from .client import VaillantClient
 from .const import (
     CONF_DID,
     DISPATCHERS,
@@ -22,7 +22,7 @@ from .const import (
     EVT_DEVICE_CONNECTED,
     WATER_HEATER_OFF,
     WATER_HEATER_ON,
-    WEBSOCKET_CLIENT,
+    API_CLIENT,
 )
 from .entity import VaillantEntity
 
@@ -44,7 +44,7 @@ async def async_setup_entry(
     """Set up Vaillant devices from a config entry."""
 
     device_id = entry.data.get(CONF_DID)
-    client: VaillantDeviceApiClient = hass.data[DOMAIN][WEBSOCKET_CLIENT][
+    client: VaillantClient = hass.data[DOMAIN][API_CLIENT][
         entry.entry_id
     ]
 
@@ -127,9 +127,9 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
 
     @property
     def current_temperature(self) -> float:
-        """Return the current dhw temperature. FIXME"""
+        """Return the current dhw temperature."""
 
-        return self.get_device_attr("Tank_Temperature")
+        return self.get_device_attr("Flow_temperature")
 
     @property
     def target_temperature(self) -> float:

@@ -8,7 +8,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity, DeviceInfo
 from vaillant_plus_cn_api import Device
 
-from .client import VaillantDeviceApiClient
+from .client import VaillantClient
 from .const import DOMAIN, EVT_DEVICE_UPDATED
 
 UPDATE_INTERVAL = timedelta(minutes=1)
@@ -21,7 +21,7 @@ class VaillantEntity(Entity):
 
     def __init__(
         self,
-        client: VaillantDeviceApiClient,
+        client: VaillantClient,
     ):
         """Initialize."""
         self._client = client
@@ -81,4 +81,4 @@ class VaillantEntity(Entity):
 
     async def send_command(self, attr: str, value: Any) -> None:
         """Send operations to cloud."""
-        await self._client.send_command(attr, value)
+        await self._client.control_device(attr, value)
