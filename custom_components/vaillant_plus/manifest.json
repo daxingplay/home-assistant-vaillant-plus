@@ -17,6 +17,6 @@
     "vaillant-plus-cn-api==1.2.8"
   ],
   "ssdp": [],
-  "version": "1.1.0",
+  "version": "1.2.0",
   "zeroconf": []
 }
