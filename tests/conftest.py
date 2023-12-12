@@ -117,7 +117,7 @@ def bypass_get_no_device_fixture():
 def error_login_fixture():
     """Simulate error when retrieving data from API."""
     with patch(
-        "custom_components.vaillant_plus.VaillantClient._connect",
+        "vaillant_plus_cn_api.VaillantApiClient.login",
         side_effect=Exception,
     ):
         yield
@@ -128,7 +128,7 @@ def error_login_fixture():
 def error_invaild_auth_when_get_device_list_fixture():
     """Simulate error when retrieving data from API."""
     with patch(
-        "custom_components.vaillant_plus.VaillantClient.get_device_list",
+        "vaillant_plus_cn_api.VaillantApiClient.get_device_list",
         side_effect=InvalidAuthError,
     ):
         yield
