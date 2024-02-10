@@ -1,11 +1,12 @@
-# """Tests for vaillant-plus client."""
-# import pytest
-# from vaillant_plus_cn_api import Token
+"""Tests for vaillant-plus client."""
+import pytest
+import logging
+from vaillant_plus_cn_api import Token
 
-# from custom_components.vaillant_plus.client import (
-#     ShouldUpdateConfigEntry,
-#     VaillantClient,
-# )
+from custom_components.vaillant_plus.client import (
+    # ShouldUpdateConfigEntry,
+    VaillantClient,
+)
 
 # from .const import CONF_HOST, CONF_HOST_API, MOCK_PASSWORD, MOCK_USERNAME
 
@@ -97,22 +98,43 @@
 #         await client.get_device(token, "2")
 
 
-# @pytest.mark.asyncio
-# async def test_client_invalid_auth(
-#     hass, aioclient_mock, invalid_auth_on_device_list, caplog
-# ):
-#     """Test API calls."""
+@pytest.mark.asyncio
+async def test_client_control_device_invalid_auth(
+    hass, invalid_auth_on_control_device, bypass_login, caplog
+):
+    """Test API calls."""
 
-#     client = VaillantApiHub(hass=hass, retry_interval=0)
+    client = VaillantClient(hass=hass, token=Token("a1", "u1", "p1"), device_id="1")
 
-#     aioclient_mock.post(
-#         f"{CONF_HOST}/app/user/login",
-#         json={"code": "200", "data": {"token": "1", "uid": "2"}},
-#     )
+    caplog.clear()
+    caplog.set_level(logging.WARNING)
+    ret = await client.control_device("Test_Attr", "1")
 
-#     with pytest.raises(ShouldUpdateConfigEntry):
-#         await client.get_device(Token("a1", "u1", "p1"), "1")
+    messages = [
+        x.message for x in caplog.records if x.message.startswith("Control device failed")
+    ]
 
+    assert ret is False
+    assert len(messages) == 3
+
+@pytest.mark.asyncio
+async def test_client_control_device(
+    hass, bypass_control_device, bypass_login, caplog
+):
+    """Test API calls."""
+
+    client = VaillantClient(hass=hass, token=Token("a1", "u1", "p1"), device_id="1")
+
+    caplog.clear()
+    caplog.set_level(logging.WARNING)
+    ret = await client.control_device("Test_Attr", "1")
+
+    messages = [
+        x.message for x in caplog.records if x.message.startswith("Control device failed")
+    ]
+
+    assert ret is True
+    assert len(messages) == 0
 
 # # In order to get 100% coverage, we need to test `api_wrapper` to test the code
 # # that isn't already called by `async_get_data` and `async_set_title`. Because the

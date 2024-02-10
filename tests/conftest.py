@@ -110,6 +110,14 @@ def bypass_get_no_device_fixture():
     ):
         yield
 
+@pytest.fixture(name="bypass_control_device")
+def bypass_control_device_fixture():
+    """Skip calls to get data from API."""
+    with patch(
+        "vaillant_plus_cn_api.VaillantApiClient.control_device",
+        return_value=True,
+    ):
+        yield
 
 # In this fixture, we are forcing calls to login to raise an Exception. This is useful
 # for exception handling.
@@ -129,6 +137,16 @@ def error_invaild_auth_when_get_device_list_fixture():
     """Simulate error when retrieving data from API."""
     with patch(
         "vaillant_plus_cn_api.VaillantApiClient.get_device_list",
+        side_effect=InvalidAuthError,
+    ):
+        yield
+
+# In this fixture, we are forcing calls to control device to raise an InvalidAuthError Exception.
+@pytest.fixture(name="invalid_auth_on_control_device")
+def error_invaild_auth_when_control_device_fixture():
+    """Simulate error when retrieving data from API."""
+    with patch(
+        "vaillant_plus_cn_api.VaillantApiClient.control_device",
         side_effect=InvalidAuthError,
     ):
         yield

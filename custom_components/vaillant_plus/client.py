@@ -95,19 +95,22 @@ class VaillantClient:
 
         await self._websocket_client.connect()
 
+    async def _get_token(self) -> None:
+        _LOGGER.info("Token expired, retrieve new token...")
+        token_new = await self._api_client.login(self._token.username, self._token.password)
+        self._token = token_new
+        self._api_client.update_token(token_new)
+        async_dispatcher_send(
+            self._hass, EVT_TOKEN_UPDATED.format(token_new.username), token_new
+        )
+
     async def start(self) -> None:
         """Start connection to cloud."""
         while self._state != "CLOSED":
             try:
                 await self._connect()
             except InvalidAuthError:
-                _LOGGER.info("Token expired, retrieve new token...")
-                token_new = await self._api_client.login(self._token.username, self._token.password)
-                self._token = token_new
-                self._api_client.update_token(token_new)
-                async_dispatcher_send(
-                    self._hass, EVT_TOKEN_UPDATED.format(token_new.username), token_new
-                )
+                await self._get_token()
             except Exception as error:
                 _LOGGER.warning("Unhandled client exception: %s", error)
 
@@ -123,9 +126,21 @@ class VaillantClient:
                 pass
         self._state = "CLOSED"
 
-    async def control_device(self, attr, value) -> None:
+    async def control_device(self, attr, value) -> bool:
         """Send command to control device."""
-        return await self._api_client.control_device(self._device_id, attr, value)
+        retry_times = 0
+        while retry_times < 3:
+            try:
+                await self._api_client.control_device(self._device_id, attr, value)
+                return True
+            except InvalidAuthError:
+                await self._get_token()
+                await asyncio.sleep(retry_times * 5)
+                retry_times = retry_times + 1
+                _LOGGER.warning("Control device failed due to invaild token, retry %d time", retry_times)
+
+        return False
+
 
 
 class InvalidAuth(HomeAssistantError):
