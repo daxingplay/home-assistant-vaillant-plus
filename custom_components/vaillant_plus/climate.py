@@ -169,15 +169,14 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         _LOGGER.debug("Setting HVAC mode to: %s", hvac_mode)
 
         if hvac_mode == HVACMode.OFF:
-            await self._client.control_device(
-                "Heating_Enable",
-                0,
-            )
+            await self._client.control_device({
+                "Heating_Enable": False,
+            })
         elif hvac_mode == HVACMode.HEAT:
-            await self._client.control_device(
-                "Heating_Enable",
-                1,
-            )
+            await self._client.control_device({
+                "Heating_Enable": True,
+                "Mode_Setting_CH": "Cruising",
+            })
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Select new HVAC preset mode."""
@@ -195,7 +194,6 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
 
         _LOGGER.debug("Setting target temperature to: %s", new_temperature)
 
-        await self._client.control_device(
-            "Room_Temperature_Setpoint_Comfort",
-            new_temperature,
-        )
+        await self._client.control_device({
+            "Room_Temperature_Setpoint_Comfort": new_temperature,
+        })

@@ -108,7 +108,7 @@ async def test_client_control_device_invalid_auth(
 
     caplog.clear()
     caplog.set_level(logging.WARNING)
-    ret = await client.control_device("Test_Attr", "1")
+    ret = await client.control_device({"Test_Attr": "1"})
 
     messages = [
         x.message for x in caplog.records if x.message.startswith("Control device failed")
@@ -127,7 +127,7 @@ async def test_client_control_device(
 
     caplog.clear()
     caplog.set_level(logging.WARNING)
-    ret = await client.control_device("Test_Attr", "1")
+    ret = await client.control_device({"Test_Attr": "1"})
 
     messages = [
         x.message for x in caplog.records if x.message.startswith("Control device failed")

@@ -81,4 +81,6 @@ class VaillantEntity(Entity):
 
     async def send_command(self, attr: str, value: Any) -> None:
         """Send operations to cloud."""
-        await self._client.control_device(attr, value)
+        await self._client.control_device({
+            f"{attr}": value
+        })

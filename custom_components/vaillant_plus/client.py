@@ -126,12 +126,12 @@ class VaillantClient:
                 pass
         self._state = "CLOSED"
 
-    async def control_device(self, attr, value) -> bool:
+    async def control_device(self, attrs: dict[str, Any]) -> bool:
         """Send command to control device."""
         retry_times = 0
         while retry_times < 3:
             try:
-                await self._api_client.control_device(self._device_id, attr, value)
+                await self._api_client.control_device(self._device_id, attrs)
                 return True
             except InvalidAuthError:
                 await self._get_token()
