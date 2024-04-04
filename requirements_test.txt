@@ -1,3 +1,2 @@
--r requirements_dev.txt
+-r requirements_test_base.txt
 pytest-homeassistant-custom-component==0.12.29
-pytest-asyncio
