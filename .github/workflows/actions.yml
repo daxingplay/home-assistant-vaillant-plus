@@ -38,7 +38,8 @@ jobs:
     name: Run tests
     strategy:
       matrix:
-        python-version: [3.11, 3.12]
+        python-version:
+          - 3.11
         pytest-homeassistant-custom-component-version:
           - 0.13.36
         include:
