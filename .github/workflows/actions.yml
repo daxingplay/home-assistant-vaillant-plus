@@ -38,7 +38,19 @@ jobs:
     name: Run tests
     strategy:
       matrix:
-        python-version: [3.9, "3.10", 3.11]
+        python-version: [3.11, 3.12]
+        pytest-homeassistant-custom-component-version:
+          - 0.13.97
+          - 0.13.109
+        include:
+          - python-version: 3.9
+            pytest-homeassistant-custom-component-version: 0.12.29
+          - python-version: 3.10
+            pytest-homeassistant-custom-component-version: 0.12.29
+          - python-version: 3.11
+            pytest-homeassistant-custom-component-version: 0.12.29
+          - python-version: 3.10
+            pytest-homeassistant-custom-component-version: 0.12.50
     steps:
       - name: Check out code from GitHub
         uses: "actions/checkout@v4"
@@ -47,7 +59,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install requirements
-        run: python3 -m pip install -r requirements_test.txt
+        run: |
+          python3 -m pip install -r requirements_test.txt
+          python3 -m pip install pytest-homeassistant-custom-component==${{ matrix.pytest-homeassistant-custom-component-version }}
       - name: Run tests
         run: |
           pytest \
