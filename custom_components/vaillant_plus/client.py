@@ -3,13 +3,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import socket
-import inspect
 from typing import Any
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from vaillant_plus_cn_api import (
     EVT_DEVICE_ATTR_UPDATE,
@@ -20,6 +17,7 @@ from vaillant_plus_cn_api import (
     VaillantWebsocketClient,
 )
 
+from .utils import get_aiohttp_session
 from .const import EVT_DEVICE_CONNECTED, EVT_DEVICE_UPDATED, EVT_TOKEN_UPDATED
 
 _LOGGER = logging.getLogger(__name__)
@@ -39,7 +37,7 @@ class VaillantClient:
         self._device: Device | None = None
         self._token = token
 
-        self._api_client = VaillantApiClient(session=self._get_session())
+        self._api_client = VaillantApiClient(session=get_aiohttp_session(self._hass))
 
         self._websocket_client: VaillantWebsocketClient | None = None
 
@@ -54,12 +52,6 @@ class VaillantClient:
     @property
     def device_attrs(self) -> dict[str, Any]:
         return self._device_attrs
-
-    def _get_session(self):
-        if len(inspect.signature(aiohttp_client.async_get_clientsession).parameters) == 2:
-            return aiohttp_client.async_get_clientsession(self._hass)
-        else:
-            return aiohttp_client.async_get_clientsession(self._hass, True, socket.AF_INET)
 
     async def _connect(self) -> None:
         device_list = await self._api_client.get_device_list()
@@ -95,7 +87,7 @@ class VaillantClient:
         self._websocket_client = VaillantWebsocketClient(
             token=self._token,
             device=self._device,
-            session=self._get_session(),
+            session=get_aiohttp_session(self._hass),
         )
         self._websocket_client.on_subscribe(device_connected)
         self._websocket_client.on_update(device_update)

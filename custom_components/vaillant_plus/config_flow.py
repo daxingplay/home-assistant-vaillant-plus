@@ -7,7 +7,6 @@ from typing import Any
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import aiohttp_client
 from vaillant_plus_cn_api import (
     Device,
     Token,
@@ -15,6 +14,7 @@ from vaillant_plus_cn_api import (
 )
 import voluptuous as vol
 
+from .utils import get_aiohttp_session
 from .const import (
     CONF_DID,
     CONF_PASSWORD,
@@ -58,7 +58,7 @@ class VaillantPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         client = VaillantApiClient(
-            session=aiohttp_client.async_get_clientsession(self.hass)
+            session=get_aiohttp_session(self.hass)
         )
 
         try:
