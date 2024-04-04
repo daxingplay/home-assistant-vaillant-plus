@@ -61,7 +61,19 @@ jobs:
             tests
           coverage lcov
       - name: Upload Coverage Results
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: coverage.lcov
+          parallel: true
+          flag-name: run-${{ join(matrix.*, ' - ') }}
+  finish:
+    needs: tests
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close parallel build
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
+          #carryforward: "run-1,run-2"
