@@ -61,8 +61,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install requirements
         run: |
-          python3 -m pip install -r requirements_test_base.txt
-          python3 -m pip install pytest-homeassistant-custom-component==${{ matrix.pytest-homeassistant-custom-component-version }}
+          sed -i 's/0.12.29/${{ matrix.pytest-homeassistant-custom-component-version }}/' requirements_test.txt
+          echo requirements_test.txt
+          python3 -m pip install -r requirements_test.txt
       - name: Run tests
         run: |
           pytest \
