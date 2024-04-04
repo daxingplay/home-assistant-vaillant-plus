@@ -39,11 +39,7 @@ class VaillantClient:
         self._device: Device | None = None
         self._token = token
 
-        if len(inspect.signature(aiohttp_client.async_get_clientsession).parameters) == 2:
-            session = aiohttp_client.async_get_clientsession(self._hass)
-        else:
-            session = aiohttp_client.async_get_clientsession(self._hass, True, socket.AF_INET)
-        self._api_client = VaillantApiClient(session=session)
+        self._api_client = VaillantApiClient(session=self._get_session())
 
         self._websocket_client: VaillantWebsocketClient | None = None
 
@@ -58,6 +54,12 @@ class VaillantClient:
     @property
     def device_attrs(self) -> dict[str, Any]:
         return self._device_attrs
+
+    def _get_session(self):
+        if len(inspect.signature(aiohttp_client.async_get_clientsession).parameters) == 2:
+            return aiohttp_client.async_get_clientsession(self._hass)
+        else:
+            return aiohttp_client.async_get_clientsession(self._hass, True, socket.AF_INET)
 
     async def _connect(self) -> None:
         device_list = await self._api_client.get_device_list()
@@ -93,7 +95,7 @@ class VaillantClient:
         self._websocket_client = VaillantWebsocketClient(
             token=self._token,
             device=self._device,
-            session=aiohttp_client.async_get_clientsession(self._hass),
+            session=self._get_session(),
         )
         self._websocket_client.on_subscribe(device_connected)
         self._websocket_client.on_update(device_update)
