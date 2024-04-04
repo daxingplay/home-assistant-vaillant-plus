@@ -45,11 +45,17 @@ jobs:
         include:
           - python-version: 3.9
             pytest-homeassistant-custom-component-version: 0.12.29
-          - python-version: 3.10
+          - python-version: "3.10"
             pytest-homeassistant-custom-component-version: 0.12.29
           - python-version: 3.11
             pytest-homeassistant-custom-component-version: 0.12.29
-          - python-version: 3.10
+          - python-version: 3.12
+            pytest-homeassistant-custom-component-version: 0.12.29
+          - python-version: "3.10"
+            pytest-homeassistant-custom-component-version: 0.12.50
+          - python-version: 3.11
+            pytest-homeassistant-custom-component-version: 0.12.50
+          - python-version: 3.12
             pytest-homeassistant-custom-component-version: 0.12.50
     steps:
       - name: Check out code from GitHub
