@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import socket
 from typing import Any
 
 from homeassistant.core import HomeAssistant, callback
@@ -37,7 +38,7 @@ class VaillantClient:
         self._device: Device | None = None
         self._token = token
 
-        session = aiohttp_client.async_get_clientsession(self._hass)
+        session = aiohttp_client.async_get_clientsession(self._hass, True, socket.AF_INET)
         self._api_client = VaillantApiClient(session=session)
 
         self._websocket_client: VaillantWebsocketClient | None = None
