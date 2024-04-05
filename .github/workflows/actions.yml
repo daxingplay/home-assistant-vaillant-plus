@@ -55,8 +55,8 @@ jobs:
             pytest-homeassistant-custom-component-version: 0.12.57
           - python-version: "3.10"
             pytest-homeassistant-custom-component-version: 0.13.0
-          # - python-version: "3.10"
-          #   pytest-homeassistant-custom-component-version: 0.13.32
+          - python-version: "3.10"
+            pytest-homeassistant-custom-component-version: 0.13.32
     steps:
       - name: Check out code from GitHub
         uses: "actions/checkout@v4"
