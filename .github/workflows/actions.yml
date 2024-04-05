@@ -38,7 +38,31 @@ jobs:
     name: Run tests
     strategy:
       matrix:
-        python-version: [3.9, "3.10", 3.11]
+        # python-version:
+        #   - 3.11
+        # pytest-homeassistant-custom-component-version:
+        #   - 0.13.36
+        include:
+          - python-version: 3.9
+            pytest-homeassistant-custom-component-version: 0.12.29
+          - python-version: "3.10"
+            pytest-homeassistant-custom-component-version: 0.12.29
+          - python-version: 3.11
+            pytest-homeassistant-custom-component-version: 0.12.29
+          - python-version: "3.10"
+            pytest-homeassistant-custom-component-version: 0.12.52
+          - python-version: "3.10"
+            pytest-homeassistant-custom-component-version: 0.12.57
+          - python-version: "3.10"
+            pytest-homeassistant-custom-component-version: 0.13.0
+          - python-version: "3.10"
+            pytest-homeassistant-custom-component-version: 0.13.32
+          - python-version: "3.11"
+            pytest-homeassistant-custom-component-version: 0.13.36
+          - python-version: "3.12"
+            pytest-homeassistant-custom-component-version: 0.13.99
+          - python-version: "3.12"
+            pytest-homeassistant-custom-component-version: 0.13.111
     steps:
       - name: Check out code from GitHub
         uses: "actions/checkout@v4"
@@ -47,7 +71,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install requirements
-        run: python3 -m pip install -r requirements_test.txt
+        run: |
+          sed -i 's/pytest-homeassistant-custom-component==[0-9]*\.[0-9]*\.[0-9]*/pytest-homeassistant-custom-component==${{ matrix.pytest-homeassistant-custom-component-version }}/g' requirements_test.txt
+          python3 -m pip install -r requirements_test.txt
       - name: Run tests
         run: |
           pytest \
@@ -61,7 +87,19 @@ jobs:
             tests
           coverage lcov
       - name: Upload Coverage Results
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: coverage.lcov
+          parallel: true
+          flag-name: run-${{ join(matrix.*, ' - ') }}
+  finish:
+    needs: tests
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close parallel build
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
+          #carryforward: "run-3.9,run-3.10,run-3.11"

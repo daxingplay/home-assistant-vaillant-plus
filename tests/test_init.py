@@ -34,6 +34,7 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_login, by
     config_entry = MockConfigEntry(
         domain=DOMAIN, data=MOCK_CONFIG_ENTRY_DATA, entry_id=MOCK_DID
     )
+    config_entry.add_to_hass(hass)
 
     # Functions/objects can be patched directly in test code as well and can be used to test
     # additional things, like whether a function was called or what arguments it was called with

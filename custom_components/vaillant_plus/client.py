@@ -7,7 +7,6 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from vaillant_plus_cn_api import (
     EVT_DEVICE_ATTR_UPDATE,
@@ -18,6 +17,7 @@ from vaillant_plus_cn_api import (
     VaillantWebsocketClient,
 )
 
+from .utils import get_aiohttp_session
 from .const import EVT_DEVICE_CONNECTED, EVT_DEVICE_UPDATED, EVT_TOKEN_UPDATED
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,12 +37,12 @@ class VaillantClient:
         self._device: Device | None = None
         self._token = token
 
-        session = aiohttp_client.async_get_clientsession(self._hass)
-        self._api_client = VaillantApiClient(session=session)
+        self._api_client = VaillantApiClient(session=get_aiohttp_session(self._hass))
 
         self._websocket_client: VaillantWebsocketClient | None = None
 
         self._failed_attempts: int = 0
+        self._sleep_task: asyncio.Task | None = None
 
         self._state = "INITED"
 
@@ -88,7 +88,7 @@ class VaillantClient:
         self._websocket_client = VaillantWebsocketClient(
             token=self._token,
             device=self._device,
-            session=aiohttp_client.async_get_clientsession(self._hass),
+            session=get_aiohttp_session(self._hass),
         )
         self._websocket_client.on_subscribe(device_connected)
         self._websocket_client.on_update(device_update)
@@ -114,7 +114,8 @@ class VaillantClient:
             except Exception as error:
                 _LOGGER.warning("Unhandled client exception: %s", error)
 
-            await asyncio.sleep(5)
+            self._sleep_task = asyncio.create_task(asyncio.sleep(5))
+            await self._sleep_task
 
     async def close(self) -> None:
         """Close connection to cloud."""
@@ -124,6 +125,14 @@ class VaillantClient:
             except Exception as error:
                 _LOGGER.exception(error)
                 pass
+
+        if self._sleep_task is not None:
+            self._sleep_task.cancel()
+            try:
+                await self._sleep_task
+            except asyncio.CancelledError:
+                pass
+
         self._state = "CLOSED"
 
     async def control_device(self, attrs: dict[str, Any]) -> bool:

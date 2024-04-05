@@ -1,6 +1,7 @@
 """Tests for vaillant-plus client."""
 import pytest
 import logging
+import asyncio
 from vaillant_plus_cn_api import Token
 
 from custom_components.vaillant_plus.client import (
@@ -135,6 +136,19 @@ async def test_client_control_device(
 
     assert ret is True
     assert len(messages) == 0
+
+@pytest.mark.asyncio
+async def test_client_close_with_sleep(
+    hass, bypass_control_device, bypass_login, caplog
+):
+    """Test API calls."""
+
+    client = VaillantClient(hass=hass, token=Token("a1", "u1", "p1"), device_id="1")
+
+    client._sleep_task = asyncio.create_task(asyncio.sleep(10))
+    await client.close()
+
+    assert client._sleep_task.cancelled
 
 # # In order to get 100% coverage, we need to test `api_wrapper` to test the code
 # # that isn't already called by `async_get_data` and `async_set_title`. Because the
