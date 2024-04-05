@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import asyncio
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
@@ -72,7 +73,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    hass.loop.create_task(client.start())
+    task = hass.loop.create_task(client.start())
+    hass.data[DOMAIN][DISPATCHERS][device_id].append(task)
 
     return True
 
@@ -92,7 +94,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     device_id = entry.data.get(CONF_DID)
     dispatchers = hass.data[DOMAIN][DISPATCHERS].pop(device_id)
-    for unsub in dispatchers:
-        unsub()
+    for unsub_or_task in dispatchers:
+        if isinstance(unsub_or_task, asyncio.Task):
+            unsub_or_task.cancel()
+        else:
+            unsub_or_task()
 
     return unload_ok
