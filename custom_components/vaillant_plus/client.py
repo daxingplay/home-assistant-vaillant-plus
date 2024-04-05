@@ -42,6 +42,7 @@ class VaillantClient:
         self._websocket_client: VaillantWebsocketClient | None = None
 
         self._failed_attempts: int = 0
+        self._sleep_task: asyncio.Task | None = None
 
         self._state = "INITED"
 
@@ -113,7 +114,8 @@ class VaillantClient:
             except Exception as error:
                 _LOGGER.warning("Unhandled client exception: %s", error)
 
-            await asyncio.sleep(5)
+            self._sleep_task = asyncio.create_task(asyncio.sleep(5))
+            await self._sleep_task
 
     async def close(self) -> None:
         """Close connection to cloud."""
@@ -123,6 +125,14 @@ class VaillantClient:
             except Exception as error:
                 _LOGGER.exception(error)
                 pass
+
+        if self._sleep_task is not None:
+            self._sleep_task.cancel()
+            try:
+                await self._sleep_task
+            except asyncio.CancelledError:
+                pass
+
         self._state = "CLOSED"
 
     async def control_device(self, attrs: dict[str, Any]) -> bool:
