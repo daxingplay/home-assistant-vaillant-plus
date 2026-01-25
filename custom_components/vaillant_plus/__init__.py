@@ -7,6 +7,7 @@ import asyncio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.typing import ConfigType
 from vaillant_plus_cn_api import Token
@@ -21,14 +22,15 @@ from .const import (
     EVT_TOKEN_UPDATED,
 )
 
-# TODO List the platforms that you want to support.
-# For your initial PR, limit it to 1 platform.
 PLATFORMS: list[Platform] = [
     Platform.CLIMATE,
     Platform.BINARY_SENSOR,
     Platform.SENSOR,
     Platform.WATER_HEATER,
 ]
+
+# This integration can only be configured through the config flow (UI)
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 
