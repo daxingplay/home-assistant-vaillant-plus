@@ -62,7 +62,7 @@ jobs:
           - python-version: "3.12"
             pytest-homeassistant-custom-component-version: 0.13.99
           - python-version: "3.12"
-            # 0.13.128+ avoids mypy-dev, but 0.13.128 has josepy/acme incompatibility.
+            # 0.13.128+ avoids mypy-dev, but 0.13.128 has josepy/acme incompatibility. From this version, will force to install josepy<2 in the task to avoid the incompatibility.
             # Use 0.13.128, which has a compatible dependency set.
             pytest-homeassistant-custom-component-version: 0.13.128
           - python-version: "3.12"
