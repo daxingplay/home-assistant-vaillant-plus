@@ -155,16 +155,26 @@ def error_invaild_auth_when_control_device_fixture():
 # Mock VaillantDeviceApiClient
 @pytest.fixture(name="device_api_client")
 async def device_api_client_fixture(hass):
-    """Create a VaillantClient with mocked aiohttp session."""
+    """Create a VaillantClient with mocked dependencies to avoid background threads."""
     from unittest.mock import MagicMock, AsyncMock
 
     # Mock the aiohttp session to avoid event loop issues
     mock_session = MagicMock()
     mock_session.close = AsyncMock()
 
+    # Mock VaillantApiClient to prevent background threads (_run_safe_shutdown_loop)
+    mock_api_client = MagicMock()
+    mock_api_client.control_device = AsyncMock(return_value=True)
+    mock_api_client.get_device_list = AsyncMock(return_value=[])
+    mock_api_client.login = AsyncMock()
+    mock_api_client.update_token = MagicMock()
+
     with patch(
         "custom_components.vaillant_plus.utils.get_aiohttp_session",
         return_value=mock_session,
+    ), patch(
+        "custom_components.vaillant_plus.client.VaillantApiClient",
+        return_value=mock_api_client,
     ):
         device_api_client = VaillantClient(
             hass=hass,
