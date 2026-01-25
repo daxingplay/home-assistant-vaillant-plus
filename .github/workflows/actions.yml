@@ -62,8 +62,9 @@ jobs:
           - python-version: "3.12"
             pytest-homeassistant-custom-component-version: 0.13.99
           - python-version: "3.12"
-            # Update to at least 0.13.128 to avoid mypy-dev dependency issue
-            pytest-homeassistant-custom-component-version: 0.13.128
+            # 0.13.128+ avoids mypy-dev, but 0.13.128 has josepy/acme incompatibility.
+            # Use 0.13.132, which has a compatible dependency set.
+            pytest-homeassistant-custom-component-version: 0.13.132
           - python-version: "3.13"
             pytest-homeassistant-custom-component-version: 0.13.308
     steps:
