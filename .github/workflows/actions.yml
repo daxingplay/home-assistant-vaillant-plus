@@ -62,7 +62,10 @@ jobs:
           - python-version: "3.12"
             pytest-homeassistant-custom-component-version: 0.13.99
           - python-version: "3.12"
-            pytest-homeassistant-custom-component-version: 0.13.111
+            # Update to at least 0.13.128 to avoid mypy-dev dependency issue
+            pytest-homeassistant-custom-component-version: 0.13.128
+          - python-version: "3.13"
+            pytest-homeassistant-custom-component-version: 0.13.308
     steps:
       - name: Check out code from GitHub
         uses: "actions/checkout@v4"
