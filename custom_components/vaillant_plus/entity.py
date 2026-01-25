@@ -1,5 +1,4 @@
 """Vaillant vSMART entity classes."""
-from datetime import timedelta
 import logging
 from typing import Any
 
@@ -10,8 +9,6 @@ from vaillant_plus_cn_api import Device
 
 from .client import VaillantClient
 from .const import DOMAIN, EVT_DEVICE_UPDATED
-
-UPDATE_INTERVAL = timedelta(minutes=1)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -34,10 +31,8 @@ class VaillantEntity(Entity):
     def device(self) -> Device:
         return self._client.device
 
-    def get_device_attr(self, attr) -> Any:
-        if self._client.device_attrs.get(attr) is not None:
-            return self._client.device_attrs.get(attr)
-        return None
+    def get_device_attr(self, attr: str) -> Any:
+        return self._client.device_attrs.get(attr)
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
@@ -61,6 +56,11 @@ class VaillantEntity(Entity):
     @property
     def should_poll(self) -> bool:
         return False
+
+    @property
+    def available(self) -> bool:
+        """Return True if the entity has device data from an active connection."""
+        return self._client.is_connected and len(self.device_attrs) > 0
 
     @property
     def device_info(self) -> DeviceInfo:
