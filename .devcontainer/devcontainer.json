@@ -1,7 +1,7 @@
 // See https://aka.ms/vscode-remote/devcontainer.json for format details.
 {
 	"name": "Home Assistant Vaillant Plus integration development",
-	"image": "mcr.microsoft.com/devcontainers/python:3.10",
+	"image": "mcr.microsoft.com/devcontainers/python:3.13",
 	"context": "..",
 	"appPort": [
 		"9123:8123"
