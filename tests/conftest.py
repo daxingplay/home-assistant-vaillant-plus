@@ -154,28 +154,39 @@ def error_invaild_auth_when_control_device_fixture():
 
 # Mock VaillantDeviceApiClient
 @pytest.fixture(name="device_api_client")
-def device_api_client_fixture(hass):
-    device_api_client = VaillantClient(
-        hass=hass,
-        token=Token("a1", "u1", "p1"),
-        device_id="1",
-    )
-    device_api_client._device = Device(
-        id="1",
-        mac="mac2",
-        product_key="pk",
-        product_id="p1",
-        product_name="pn",
-        product_verbose_name="pvn",
-        is_online=True,
-        is_manager=True,
-        group_id=2,
-        sno="sno",
-        create_time="2000-01-01 00:00:00",
-        last_offline_time="2000-12-31 00:00:00",
-        model_alias="weijingling",
-        model="model_name",
-        serial_number="s1",
-        services_count=0,
-    )
-    yield device_api_client
+async def device_api_client_fixture(hass):
+    """Create a VaillantClient with mocked aiohttp session."""
+    from unittest.mock import MagicMock, AsyncMock
+
+    # Mock the aiohttp session to avoid event loop issues
+    mock_session = MagicMock()
+    mock_session.close = AsyncMock()
+
+    with patch(
+        "custom_components.vaillant_plus.utils.get_aiohttp_session",
+        return_value=mock_session,
+    ):
+        device_api_client = VaillantClient(
+            hass=hass,
+            token=Token("a1", "u1", "p1"),
+            device_id="1",
+        )
+        device_api_client._device = Device(
+            id="1",
+            mac="mac2",
+            product_key="pk",
+            product_id="p1",
+            product_name="pn",
+            product_verbose_name="pvn",
+            is_online=True,
+            is_manager=True,
+            group_id=2,
+            sno="sno",
+            create_time="2000-01-01 00:00:00",
+            last_offline_time="2000-12-31 00:00:00",
+            model_alias="weijingling",
+            model="model_name",
+            serial_number="s1",
+            services_count=0,
+        )
+        yield device_api_client

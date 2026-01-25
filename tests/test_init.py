@@ -2,6 +2,7 @@
 from unittest.mock import patch
 
 from homeassistant.components.climate.const import HVACAction
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import (
     ATTR_FRIENDLY_NAME,
     ATTR_TEMPERATURE,
@@ -15,8 +16,6 @@ from vaillant_plus_cn_api import EVT_DEVICE_ATTR_UPDATE
 from custom_components.vaillant_plus import (
     VaillantClient,
     async_setup,
-    async_setup_entry,
-    async_unload_entry,
 )
 from custom_components.vaillant_plus.const import DISPATCHERS, DOMAIN, API_CLIENT
 
@@ -42,7 +41,10 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_login, by
         "vaillant_plus_cn_api.VaillantWebsocketClient.connect"
     ) as connect_func:
         assert await async_setup(hass, {})
-        assert await async_setup_entry(hass, config_entry)
+        # Use proper config entry setup mechanism instead of calling async_setup_entry directly
+        await hass.config_entries.async_setup(config_entry.entry_id)
+        await hass.async_block_till_done()
+        assert config_entry.state == ConfigEntryState.LOADED
 
         assert DOMAIN in hass.data
         assert MOCK_DID in hass.data[DOMAIN][DISPATCHERS]
@@ -114,7 +116,9 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_login, by
         with patch(
             "custom_components.vaillant_plus.VaillantClient.close"
         ) as close_func:
-            assert await async_unload_entry(hass, config_entry)
+            # Use proper config entry unload mechanism
+            await hass.config_entries.async_unload(config_entry.entry_id)
             await hass.async_block_till_done()
+            assert config_entry.state == ConfigEntryState.NOT_LOADED
             assert close_func.called
             assert config_entry.entry_id not in hass.data[DOMAIN][API_CLIENT]
