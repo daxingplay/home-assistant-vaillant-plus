@@ -174,9 +174,9 @@ class VaillantBinarySensorEntity(VaillantEntity, BinarySensorEntity):
         if self.entity_description.key == "RF_Status":
             self._attr_is_on = value == 3
         elif self.entity_description.key == "Boiler_info3_bit0":
-            self._attr_is_on = value.startswith("1")
+            self._attr_is_on = isinstance(value, str) and value.startswith("1")
         elif self.entity_description.key == "Boiler_info5_bit4":
-            self._attr_is_on = value.startswith("1")
+            self._attr_is_on = isinstance(value, str) and value.startswith("1")
         elif self.entity_description.on_state is not None:
             self._attr_is_on = value == self.entity_description.on_state
         else:
