@@ -30,7 +30,16 @@ PLATFORMS: list[Platform] = [
 ]
 
 # This integration can only be configured through the config flow (UI)
-CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+# cv.config_entry_only_config_schema was added in HA 2022.6
+# Fall back to empty_config_schema or a basic schema for older versions
+if hasattr(cv, "config_entry_only_config_schema"):
+    CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+elif hasattr(cv, "empty_config_schema"):
+    CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
+else:
+    # For very old HA versions, define a basic schema that accepts but ignores config
+    import voluptuous as vol
+    CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Schema({})}, extra=vol.ALLOW_EXTRA)
 
 _LOGGER = logging.getLogger(__name__)
 
