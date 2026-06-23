@@ -15,15 +15,41 @@
 # See here for more info: https://docs.pytest.org/en/latest/fixture.html (note that
 # pytest includes fixtures OOB which you can use as defined on this page)
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock, AsyncMock
 
 import pytest
 from vaillant_plus_cn_api import Device, InvalidAuthError, Token
 
-from custom_components.vaillant_plus import VaillantClient
 from .const import MOCK_PASSWORD, MOCK_USERNAME
 
 pytest_plugins = "pytest_homeassistant_custom_component"
+
+# Global patch for pycares.Channel to prevent _run_safe_shutdown_loop thread creation.
+# This thread causes test failures in older versions of pytest-homeassistant-custom-component
+# (0.13.128, 0.13.152, 0.13.162) which don't have an exception for this thread.
+# We apply this patch at module load time to ensure it's in place before any tests run.
+_pycares_patcher = None
+
+
+def pytest_configure(config):
+    """Apply pycares patch at pytest configuration time."""
+    global _pycares_patcher
+    try:
+        _pycares_patcher = patch("pycares.Channel")
+        _pycares_patcher.start()
+    except Exception:
+        # If pycares is not available or patching fails, continue without mock
+        pass
+
+
+def pytest_unconfigure(config):
+    """Remove pycares patch when pytest finishes."""
+    global _pycares_patcher
+    if _pycares_patcher is not None:
+        try:
+            _pycares_patcher.stop()
+        except Exception:
+            pass
 
 
 # This fixture enables loading custom integrations in all tests.
@@ -154,28 +180,54 @@ def error_invaild_auth_when_control_device_fixture():
 
 # Mock VaillantDeviceApiClient
 @pytest.fixture(name="device_api_client")
-def device_api_client_fixture(hass):
-    device_api_client = VaillantClient(
-        hass=hass,
-        token=Token("a1", "u1", "p1"),
-        device_id="1",
-    )
-    device_api_client._device = Device(
-        id="1",
-        mac="mac2",
-        product_key="pk",
-        product_id="p1",
-        product_name="pn",
-        product_verbose_name="pvn",
-        is_online=True,
-        is_manager=True,
-        group_id=2,
-        sno="sno",
-        create_time="2000-01-01 00:00:00",
-        last_offline_time="2000-12-31 00:00:00",
-        model_alias="weijingling",
-        model="model_name",
-        serial_number="s1",
-        services_count=0,
-    )
-    yield device_api_client
+async def device_api_client_fixture(hass):
+    """Create a VaillantClient with mocked dependencies to avoid background threads."""
+    # Import VaillantClient inside fixture to ensure patches are applied first
+    from custom_components.vaillant_plus import VaillantClient
+
+    # Mock the aiohttp session to avoid event loop issues
+    mock_session = MagicMock()
+    mock_session.close = AsyncMock()
+
+    # Mock VaillantApiClient to prevent background threads (_run_safe_shutdown_loop)
+    # Patch at both source and import locations to ensure the mock is used
+    mock_api_client = MagicMock()
+    mock_api_client.control_device = AsyncMock(return_value=True)
+    mock_api_client.get_device_list = AsyncMock(return_value=[])
+    mock_api_client.login = AsyncMock()
+    mock_api_client.update_token = MagicMock()
+
+    with patch(
+        "custom_components.vaillant_plus.utils.get_aiohttp_session",
+        return_value=mock_session,
+    ), patch(
+        "vaillant_plus_cn_api.VaillantApiClient",
+        return_value=mock_api_client,
+    ), patch(
+        "custom_components.vaillant_plus.client.VaillantApiClient",
+        return_value=mock_api_client,
+    ):
+        device_api_client = VaillantClient(
+            hass=hass,
+            token=Token("a1", "u1", "p1"),
+            device_id="1",
+        )
+        device_api_client._device = Device(
+            id="1",
+            mac="mac2",
+            product_key="pk",
+            product_id="p1",
+            product_name="pn",
+            product_verbose_name="pvn",
+            is_online=True,
+            is_manager=True,
+            group_id=2,
+            sno="sno",
+            create_time="2000-01-01 00:00:00",
+            last_offline_time="2000-12-31 00:00:00",
+            model_alias="weijingling",
+            model="model_name",
+            serial_number="s1",
+            services_count=0,
+        )
+        yield device_api_client
