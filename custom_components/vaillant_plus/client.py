@@ -41,7 +41,6 @@ class VaillantClient:
 
         self._websocket_client: VaillantWebsocketClient | None = None
 
-        self._failed_attempts: int = 0
         self._sleep_task: asyncio.Task | None = None
 
         self._state = "INITED"
@@ -54,6 +53,11 @@ class VaillantClient:
     def device_attrs(self) -> dict[str, Any]:
         return self._device_attrs
 
+    @property
+    def is_connected(self) -> bool:
+        """Return True if the client is connected to the cloud."""
+        return self._state != "CLOSED" and self._device is not None
+
     async def _connect(self) -> None:
         device_list = await self._api_client.get_device_list()
         filtered_device_list = [device for device in device_list if device.id == self._device_id]
@@ -65,7 +69,7 @@ class VaillantClient:
         if self._websocket_client is not None:
             try:
                 await self._websocket_client.close()
-            except:
+            except Exception:
                 pass
 
         @callback
@@ -106,15 +110,26 @@ class VaillantClient:
 
     async def start(self) -> None:
         """Start connection to cloud."""
+        retry_delay = 5
+        max_delay = 300  # 5 minutes max
         while self._state != "CLOSED":
             try:
                 await self._connect()
+                retry_delay = 5  # Reset on success
             except InvalidAuthError:
                 await self._get_token()
+            except ShouldUpdateConfigEntry:
+                _LOGGER.error("Device not found, config entry needs update")
+                break
             except Exception as error:
-                _LOGGER.warning("Unhandled client exception: %s", error)
+                _LOGGER.warning(
+                    "Unhandled client exception: %s, retrying in %ds",
+                    error,
+                    retry_delay,
+                )
+                retry_delay = min(retry_delay * 2, max_delay)
 
-            self._sleep_task = asyncio.create_task(asyncio.sleep(5))
+            self._sleep_task = asyncio.create_task(asyncio.sleep(retry_delay))
             await self._sleep_task
 
     async def close(self) -> None:
@@ -123,8 +138,7 @@ class VaillantClient:
             try:
                 await self._websocket_client.close()
             except Exception as error:
-                _LOGGER.exception(error)
-                pass
+                _LOGGER.exception("%s", error)
 
         if self._sleep_task is not None:
             self._sleep_task.cancel()
@@ -146,18 +160,9 @@ class VaillantClient:
                 await self._get_token()
                 await asyncio.sleep(retry_times * 5)
                 retry_times = retry_times + 1
-                _LOGGER.warning("Control device failed due to invaild token, retry %d time", retry_times)
+                _LOGGER.warning("Control device failed due to invalid token, retry %d time", retry_times)
 
         return False
-
-
-
-class InvalidAuth(HomeAssistantError):
-    """Error to indicate there is invalid auth."""
-
-
-class UnknownException(HomeAssistantError):
-    """Error that is not known."""
 
 
 class ShouldUpdateConfigEntry(HomeAssistantError):

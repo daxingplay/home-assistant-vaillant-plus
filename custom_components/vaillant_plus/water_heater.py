@@ -1,4 +1,4 @@
-"""The Vaillant Plus climate platform."""
+"""The Vaillant Plus water heater platform."""
 from __future__ import annotations
 
 import logging

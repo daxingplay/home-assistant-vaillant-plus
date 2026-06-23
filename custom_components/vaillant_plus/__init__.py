@@ -7,6 +7,7 @@ import asyncio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.typing import ConfigType
 from vaillant_plus_cn_api import Token
@@ -21,14 +22,24 @@ from .const import (
     EVT_TOKEN_UPDATED,
 )
 
-# TODO List the platforms that you want to support.
-# For your initial PR, limit it to 1 platform.
 PLATFORMS: list[Platform] = [
     Platform.CLIMATE,
     Platform.BINARY_SENSOR,
     Platform.SENSOR,
     Platform.WATER_HEATER,
 ]
+
+# This integration can only be configured through the config flow (UI)
+# cv.config_entry_only_config_schema was added in HA 2022.6
+# Fall back to empty_config_schema or a basic schema for older versions
+if hasattr(cv, "config_entry_only_config_schema"):
+    CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+elif hasattr(cv, "empty_config_schema"):
+    CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
+else:
+    # For very old HA versions, define a basic schema that accepts but ignores config
+    import voluptuous as vol
+    CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Schema({})}, extra=vol.ALLOW_EXTRA)
 
 _LOGGER = logging.getLogger(__name__)
 

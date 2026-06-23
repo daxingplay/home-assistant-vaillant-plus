@@ -62,7 +62,15 @@ jobs:
           - python-version: "3.12"
             pytest-homeassistant-custom-component-version: 0.13.99
           - python-version: "3.12"
-            pytest-homeassistant-custom-component-version: 0.13.111
+            # 0.13.128+ avoids mypy-dev, but 0.13.128 has josepy/acme incompatibility. From this version, will force to install josepy<2 in the task to avoid the incompatibility.
+            # Use 0.13.128, which has a compatible dependency set.
+            pytest-homeassistant-custom-component-version: 0.13.128
+          - python-version: "3.12"
+            pytest-homeassistant-custom-component-version: 0.13.152
+          - python-version: "3.12"
+            pytest-homeassistant-custom-component-version: 0.13.162
+          - python-version: "3.13"
+            pytest-homeassistant-custom-component-version: 0.13.308
     steps:
       - name: Check out code from GitHub
         uses: "actions/checkout@v4"
@@ -74,6 +82,11 @@ jobs:
         run: |
           sed -i 's/pytest-homeassistant-custom-component==[0-9]*\.[0-9]*\.[0-9]*/pytest-homeassistant-custom-component==${{ matrix.pytest-homeassistant-custom-component-version }}/g' requirements_test.txt
           python3 -m pip install -r requirements_test.txt
+          # Pin josepy<2 only for Python 3.12 + pytest-homeassistant-custom-component>=0.13.128
+          # (acme uses ComparableX509, removed in josepy 2.0)
+          if [[ "${{ matrix.python-version }}" == "3.12" ]] && [[ "$(printf '%s\n' "0.13.128" "${{ matrix.pytest-homeassistant-custom-component-version }}" | sort -V | tail -1)" == "${{ matrix.pytest-homeassistant-custom-component-version }}" ]]; then
+            python3 -m pip install 'josepy<2'
+          fi
       - name: Run tests
         run: |
           pytest \

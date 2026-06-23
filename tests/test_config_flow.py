@@ -1,9 +1,9 @@
 """Test vaillant-plus config flow."""
 from unittest.mock import patch
 
-from homeassistant import config_entries, data_entry_flow
+from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.data_entry_flow import FlowResult, FlowResultType
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -41,7 +41,7 @@ async def test_successful_config_flow(
     )
 
     # Check that the config flow shows the user form as the first step
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "user"
 
     # If a user were to enter `test_username` for username and `test_password`
@@ -51,7 +51,7 @@ async def test_successful_config_flow(
         user_input=MOCK_INPUT,
     )
 
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "select"
 
     result = await hass.config_entries.flow.async_configure(
@@ -61,7 +61,7 @@ async def test_successful_config_flow(
 
     # Check that the config flow is complete and a new entry is created with
     # the input data
-    assert result["type"] == data_entry_flow.RESULT_TYPE_CREATE_ENTRY
+    assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["title"] == "pn"
     assert result["data"] == {
         CONF_DID: "1",
@@ -80,14 +80,14 @@ async def test_failed_config_flow(hass: HomeAssistant, error_on_login):
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
 
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "user"
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], user_input=MOCK_INPUT
     )
 
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == FlowResultType.FORM
     assert result["errors"] == {"base": "invalid_auth"}
 
 
@@ -99,14 +99,14 @@ async def test_failed_config_flow_no_device(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
 
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "user"
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], user_input=MOCK_INPUT
     )
 
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == FlowResultType.FORM
     assert result["errors"] == {"base": "no_devices"}
 
 
@@ -122,7 +122,7 @@ async def test_update_existing_entry(
     )
 
     # Check that the config flow shows the user form as the first step
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "user"
 
     # If a user were to enter `test_username` for username and `test_password`
@@ -132,7 +132,7 @@ async def test_update_existing_entry(
         user_input=MOCK_INPUT,
     )
 
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "select"
 
     entry = MockConfigEntry(
@@ -150,7 +150,7 @@ async def test_update_existing_entry(
         user_input={"select_device": "pn_1"},
     )
 
-    assert result["type"] == data_entry_flow.RESULT_TYPE_CREATE_ENTRY
+    assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["title"] == "pn"
     assert result["data"] == {
         CONF_DID: "1",
@@ -171,7 +171,7 @@ async def test_update_existing_entry(
 #     result = await hass.config_entries.options.async_init(entry.entry_id)
 
 #     # Verify that the first options step is a user form
-#     assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+#     assert result["type"] == FlowResultType.FORM
 #     assert result["step_id"] == "user"
 
 #     # Enter some fake data into the form
@@ -181,7 +181,7 @@ async def test_update_existing_entry(
 #     )
 
 #     # Verify that the flow finishes
-#     assert result["type"] == data_entry_flow.RESULT_TYPE_CREATE_ENTRY
+#     assert result["type"] == FlowResultType.CREATE_ENTRY
 #     assert result["title"] == "test_username"
 
 #     # Verify that the options were updated
