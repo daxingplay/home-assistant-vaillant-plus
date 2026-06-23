@@ -128,7 +128,7 @@ MOCK_DEVICE_ATTRS_WHEN_UPDATE = {
     "Start_Time_CH2": "000000000000000000000000",
     "return_temperature": 0,
     "DHW_Function": "none",
-    "Current_DHW_Setpoint": 45,
+    "Current_DHW_Setpoint": 60,
     "Boiler_info5_bit4": "00",
     "DHW_setpoint": 60,
     "Heating_Curve": 1

@@ -80,7 +80,7 @@ class VaillantClient:
             if event == EVT_DEVICE_ATTR_UPDATE:
                 device_attrs: dict[str, Any] = data.get("data", {})
                 if len(device_attrs) > 0:
-                    self._device_attrs = device_attrs.copy()
+                    self._device_attrs.update(device_attrs)
                     async_dispatcher_send(
                         self._hass, EVT_DEVICE_UPDATED.format(self._device.id), device_attrs.copy()
                     )
