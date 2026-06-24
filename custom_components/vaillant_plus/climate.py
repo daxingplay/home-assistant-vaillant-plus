@@ -18,7 +18,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client import VaillantClient
-from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, API_CLIENT
+from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, EVT_DEVICE_UPDATED, API_CLIENT
 from .entity import VaillantEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ async def async_setup_entry(
     def async_new_climate(device_attrs: dict[str, Any]):
         _LOGGER.debug("New climate found")
         if "climate" not in added_entities:
-            if device_attrs.get("Enabled_Heating") is not None:
+            if device_attrs.get("Enabled_Heating") is not None or device_attrs.get("Heating_Enable") is not None:
                 new_devices = [VaillantClimate(client)]
                 async_add_devices(new_devices)
                 added_entities.append("climate")
@@ -62,17 +62,24 @@ async def async_setup_entry(
         else:
             _LOGGER.debug("Already added climate device. skip.")
 
-    unsub = async_dispatcher_connect(
-        hass, EVT_DEVICE_CONNECTED.format(device_id), async_new_climate
-    )
-
-    hass.data[DOMAIN][DISPATCHERS][device_id].append(unsub)
+    for signal in (EVT_DEVICE_CONNECTED, EVT_DEVICE_UPDATED):
+        unsub = async_dispatcher_connect(
+            hass, signal.format(device_id), async_new_climate
+        )
+        hass.data[DOMAIN][DISPATCHERS][device_id].append(unsub)
 
     return True
 
 
 class VaillantClimate(VaillantEntity, ClimateEntity):
     """Vaillant vSMART Climate."""
+
+    def _heating_enabled_value(self) -> Any:
+        """Return the current heating enable value from known API variants."""
+        value = self.get_device_attr("Enabled_Heating")
+        if value is not None:
+            return value
+        return self.get_device_attr("Heating_Enable")
 
     @property
     def should_poll(self) -> bool:
@@ -127,7 +134,7 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         """
 
         # TODO whether support HVACMode.AUTO
-        if self.get_device_attr("Enabled_Heating") == 1:
+        if self._heating_enabled_value() == 1:
             return HVACMode.HEAT
 
         return HVACMode.OFF
@@ -138,7 +145,7 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         Return the currently running HVAC action.
         """
 
-        if self.get_device_attr("Enabled_Heating") == 0:
+        if self._heating_enabled_value() == 0:
             return HVACAction.OFF
 
         try:
