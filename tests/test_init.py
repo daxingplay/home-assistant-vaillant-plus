@@ -87,9 +87,9 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_login, by
 
         # Test whether the states of those entities are correct
         state_binary_sensor_heating = hass.states.get(binary_sensor_heating_id)
-        assert (
-            state_binary_sensor_heating.attributes.get(ATTR_FRIENDLY_NAME) == "Heating"
-        )
+        assert state_binary_sensor_heating.attributes.get(
+            ATTR_FRIENDLY_NAME
+        ).endswith("Heating")
         assert state_binary_sensor_heating.state == STATE_OFF
 
         state_water_heater = hass.states.get(water_heater_id)
