@@ -1,5 +1,5 @@
 -r requirements_dev.txt
-pytest-homeassistant-custom-component==0.13.308
+pytest-homeassistant-custom-component==0.13.356
 pytest-asyncio
 # Compatibility dependencies for the legacy Home Assistant/pytest matrix entries.
 py==1.11.0

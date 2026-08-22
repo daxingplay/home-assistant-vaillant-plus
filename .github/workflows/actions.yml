@@ -71,6 +71,15 @@ jobs:
             pytest-homeassistant-custom-component-version: 0.13.162
           - python-version: "3.13"
             pytest-homeassistant-custom-component-version: 0.13.308
+          - python-version: "3.14"
+            # Home Assistant 2026.6.4
+            pytest-homeassistant-custom-component-version: 0.13.340
+          - python-version: "3.14"
+            # Home Assistant 2026.7.4
+            pytest-homeassistant-custom-component-version: 0.13.348
+          - python-version: "3.14"
+            # Home Assistant 2026.8.2
+            pytest-homeassistant-custom-component-version: 0.13.356
     steps:
       - name: Check out code from GitHub
         uses: "actions/checkout@v4"
