@@ -1,6 +1,13 @@
 # Changelog
 
 <!--next-version-placeholder-->
+## v1.2.7 (2026-08-30)
+* [#34](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/34) Support `water_heater.turn_on` / `water_heater.turn_off`, so device actions and scripts can switch domestic hot water on and off. The DHW temperature limits now fall back to 35–65 °C when the gateway does not report them.
+* [#29](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/29) [#35](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/35) Reuse the access token stored in the config entry. Previously every start sent unauthenticated requests, was rejected with `token 过期` and logged in again, which invalidated the session of the Vaillant mobile app. Re-login failures now back off instead of retrying in a tight loop.
+* [#33](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/33) [#30](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/30) Discover entities from all attributes received so far, on every gateway frame, instead of only the first one. Attributes that arrive in a later partial update now create their entities, and the "missing required attribute" warning is logged once, listing what was expected and what the device reported.
+* Add config entry diagnostics (device attributes with credentials redacted) to make gateway issues reportable in one click.
+* Import `DeviceInfo` and `EntityCategory` from their canonical locations, with a fallback for older Home Assistant releases.
+
 ## v1.2.6 (2026-08-30)
 * Use Home Assistant unit constants for water pressure (`bar`) and Wi-Fi RSSI (`dBm`) instead of hard-coded strings.
 * Add regression tests validating every sensor description against the unit table of the Home Assistant version under test, so a missing or invalid unit fails CI instead of warning in users' logs.

@@ -14,11 +14,11 @@ from homeassistant.components.climate.const import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client import VaillantClient
-from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, EVT_DEVICE_UPDATED, API_CLIENT
+from .const import CONF_DID, DOMAIN, API_CLIENT
+from .discovery import MissingAttributeWarning, async_register_discovery
 from .entity import VaillantEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -34,6 +34,8 @@ SUPPORTED_FEATURES = (
 SUPPORTED_HVAC_MODES = [HVACMode.HEAT, HVACMode.OFF]
 SUPPORTED_PRESET_MODES = [PRESET_COMFORT]
 
+HEATING_ENABLE_ATTRS = ("Enabled_Heating", "Heating_Enable")
+
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_devices: AddEntitiesCallback
@@ -46,27 +48,23 @@ async def async_setup_entry(
     ]
 
     added_entities = []
+    missing_attribute_warning = MissingAttributeWarning(_LOGGER, "Climate")
 
     @callback
     def async_new_climate(device_attrs: dict[str, Any]):
-        _LOGGER.debug("New climate found")
-        if "climate" not in added_entities:
-            if device_attrs.get("Enabled_Heating") is not None or device_attrs.get("Heating_Enable") is not None:
-                new_devices = [VaillantClimate(client)]
-                async_add_devices(new_devices)
-                added_entities.append("climate")
-            else:
-                _LOGGER.warning(
-                    "Missing required attribute to setup Vaillant Climate. skip."
-                )
-        else:
+        if "climate" in added_entities:
             _LOGGER.debug("Already added climate device. skip.")
+            return
 
-    for signal in (EVT_DEVICE_CONNECTED, EVT_DEVICE_UPDATED):
-        unsub = async_dispatcher_connect(
-            hass, signal.format(device_id), async_new_climate
-        )
-        hass.data[DOMAIN][DISPATCHERS][device_id].append(unsub)
+        if all(device_attrs.get(attr) is None for attr in HEATING_ENABLE_ATTRS):
+            missing_attribute_warning.report(HEATING_ENABLE_ATTRS, device_attrs)
+            return
+
+        _LOGGER.debug("New climate found")
+        added_entities.append("climate")
+        async_add_devices([VaillantClimate(client)])
+
+    async_register_discovery(hass, device_id, client, async_new_climate)
 
     return True
 
@@ -76,10 +74,11 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
 
     def _heating_enabled_value(self) -> Any:
         """Return the current heating enable value from known API variants."""
-        value = self.get_device_attr("Enabled_Heating")
-        if value is not None:
-            return value
-        return self.get_device_attr("Heating_Enable")
+        for attr in HEATING_ENABLE_ATTRS:
+            value = self.get_device_attr(attr)
+            if value is not None:
+                return value
+        return None
 
     @property
     def should_poll(self) -> bool:

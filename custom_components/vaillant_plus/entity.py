@@ -4,7 +4,12 @@ from typing import Any
 
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import Entity, DeviceInfo
+from homeassistant.helpers.entity import Entity
+
+try:  # Home Assistant >= 2022.3, canonical location since the entity helper split
+    from homeassistant.helpers.device_registry import DeviceInfo
+except ImportError:  # pragma: no cover - older Home Assistant releases
+    from homeassistant.helpers.entity import DeviceInfo
 from vaillant_plus_cn_api import Device
 
 from .client import VaillantClient
@@ -60,7 +65,11 @@ class VaillantEntity(Entity):
     @property
     def available(self) -> bool:
         """Return True if the entity has device data from an active connection."""
-        return self._client.is_connected and len(self.device_attrs) > 0
+        if not self._client.is_connected or len(self.device_attrs) == 0:
+            return False
+        # Platforms mark themselves unavailable when their own attribute is
+        # missing from the payload; `_attr_available` defaults to True.
+        return self._attr_available
 
     @property
     def device_info(self) -> DeviceInfo:

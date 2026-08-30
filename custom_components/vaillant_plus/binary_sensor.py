@@ -11,12 +11,16 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+try:  # Home Assistant >= 2022.4
+    from homeassistant.const import EntityCategory
+except ImportError:  # pragma: no cover - older Home Assistant releases
+    from homeassistant.helpers.entity import EntityCategory
+
 from .client import VaillantClient
-from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, API_CLIENT
+from .const import CONF_DID, DOMAIN, API_CLIENT
+from .discovery import async_register_discovery
 from .entity import VaillantEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -138,11 +142,7 @@ async def async_setup_entry(
         if len(new_entities) > 0:
             async_add_entities(new_entities)
 
-    unsub = async_dispatcher_connect(
-        hass, EVT_DEVICE_CONNECTED.format(device_id), async_new_entities
-    )
-
-    hass.data[DOMAIN][DISPATCHERS][device_id].append(unsub)
+    async_register_discovery(hass, device_id, client, async_new_entities)
 
     return True
 

@@ -30,10 +30,9 @@ def test_binary_sensor_bit_fields_accept_integer_values():
 
 def test_climate_accepts_current_heating_enable_attribute():
     """Current China gateway payloads may expose Heating_Enable only."""
-    source = (ROOT / "custom_components/vaillant_plus/climate.py").read_text()
+    from custom_components.vaillant_plus.climate import HEATING_ENABLE_ATTRS
 
-    assert 'device_attrs.get("Heating_Enable") is not None' in source
-    assert 'return self.get_device_attr("Heating_Enable")' in source
+    assert HEATING_ENABLE_ATTRS == ("Enabled_Heating", "Heating_Enable")
 
 
 def test_client_merges_partial_device_updates():
@@ -44,12 +43,18 @@ def test_client_merges_partial_device_updates():
     assert "self._device_attrs = device_attrs.copy()" in source
 
 
-def test_climate_can_be_created_from_later_update_events():
-    """Climate creation should not depend only on the first connected frame."""
-    source = (ROOT / "custom_components/vaillant_plus/climate.py").read_text()
+def test_all_platforms_discover_entities_from_accumulated_attributes():
+    """Every platform must keep discovering on later, partial update frames."""
+    discovery = (ROOT / "custom_components/vaillant_plus/discovery.py").read_text()
 
-    assert "EVT_DEVICE_UPDATED" in source
-    assert "for signal in (EVT_DEVICE_CONNECTED, EVT_DEVICE_UPDATED):" in source
+    assert "for signal in (EVT_DEVICE_CONNECTED, EVT_DEVICE_UPDATED):" in discovery
+    assert "device_attrs = client.device_attrs" in discovery
+
+    for platform in ("climate", "water_heater", "sensor", "binary_sensor"):
+        source = (
+            ROOT / f"custom_components/vaillant_plus/{platform}.py"
+        ).read_text()
+        assert "async_register_discovery(hass, device_id, client," in source
 
 
 def test_water_heater_accepts_current_dhw_enable_attributes():
@@ -73,9 +78,12 @@ def test_water_heater_prefers_current_dhw_setpoint():
     """DHW target temperature should prefer the current setpoint when available."""
     source = (ROOT / "custom_components/vaillant_plus/water_heater.py").read_text()
 
-    assert (
-        'for attr in ("Current_DHW_Setpoint", "DHW_readSetPoint", "DHW_setpoint"):'
-        in source
+    from custom_components.vaillant_plus.water_heater import DHW_SETPOINT_ATTRS
+
+    assert DHW_SETPOINT_ATTRS == (
+        "Current_DHW_Setpoint",
+        "DHW_readSetPoint",
+        "DHW_setpoint",
     )
     assert "return self._dhw_target_temperature_value()" in source
 
