@@ -128,3 +128,48 @@ async def test_home_assistant_resolves_every_entity_name(hass):
                     f".{description.translation_key}.name"
                 )
                 assert translations.get(key), f"{language}: {key} did not resolve"
+
+
+def test_translation_key_compat_shim_for_old_home_assistant():
+    """Descriptions must accept a translation key on every supported release.
+
+    `EntityDescription.translation_key` only exists from Home Assistant 2023.1
+    on. Before that, passing one raises TypeError while the descriptions are
+    being built, i.e. at import time, which stops the integration from loading
+    at all -- the CI matrix still covers 2022.12.
+    """
+    from dataclasses import dataclass
+
+    from custom_components.vaillant_plus.compat import (
+        supports_translation_key,
+        with_translation_key,
+    )
+
+    @dataclass
+    class LegacyDescription:
+        """An entity description as Home Assistant 2022.12 defines it."""
+
+        key: str
+        name: str | None = None
+
+    assert supports_translation_key(LegacyDescription) is False
+
+    patched = with_translation_key(LegacyDescription)
+    assert supports_translation_key(patched) is True
+    assert patched.__name__ == "LegacyDescription"
+
+    description = patched(key="Flow_temperature", name="Flow temperature")
+    assert description.translation_key is None
+
+    # The key is accepted and ignored; the English name is what gets used.
+    description = patched(
+        key="Flow_temperature",
+        name="Flow temperature",
+        translation_key="flow_temperature",
+    )
+    assert description.name == "Flow temperature"
+
+    # A modern description class is returned untouched.
+    from homeassistant.components.sensor import SensorEntityDescription
+
+    assert with_translation_key(SensorEntityDescription) is SensorEntityDescription
