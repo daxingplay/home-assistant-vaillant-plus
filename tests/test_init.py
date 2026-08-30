@@ -10,6 +10,7 @@ from homeassistant.const import (
     STATE_ON,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from vaillant_plus_cn_api import EVT_DEVICE_ATTR_UPDATE
 
@@ -70,16 +71,28 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_login, by
 
         await hass.async_block_till_done()
 
-        # Test whether the states of those entities are correct
-        state_binary_sensor_heating = hass.states.get("binary_sensor.heating")
-        assert (
-            state_binary_sensor_heating.attributes.get(ATTR_FRIENDLY_NAME) == "Heating"
+        entity_registry = er.async_get(hass)
+        binary_sensor_heating_id = entity_registry.async_get_entity_id(
+            "binary_sensor", DOMAIN, "1_Heating_Enable"
         )
+        water_heater_id = entity_registry.async_get_entity_id(
+            "water_heater", DOMAIN, "1_water_heater"
+        )
+        climate_id = entity_registry.async_get_entity_id(
+            "climate", DOMAIN, "1_climate"
+        )
+        assert binary_sensor_heating_id is not None
+        assert water_heater_id is not None
+        assert climate_id is not None
+
+        # Test whether the states of those entities are correct
+        state_binary_sensor_heating = hass.states.get(binary_sensor_heating_id)
+        assert state_binary_sensor_heating.attributes.get(
+            ATTR_FRIENDLY_NAME
+        ).endswith("Heating")
         assert state_binary_sensor_heating.state == STATE_OFF
 
-        state_water_heater = hass.states.get(
-            "water_heater.vaillant_plus_1_water_heater"
-        )
+        state_water_heater = hass.states.get(water_heater_id)
         assert state_water_heater.state == STATE_ON
         assert state_water_heater.attributes.get(ATTR_TEMPERATURE) == 45
         assert state_water_heater.attributes.get("min_temp") == 35.0
@@ -87,7 +100,7 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_login, by
         assert state_water_heater.attributes.get("target_temp_low") == 35.0
         assert state_water_heater.attributes.get("target_temp_high") == 65.0
 
-        state_climate = hass.states.get("climate.vaillant_plus_1_climate")
+        state_climate = hass.states.get(climate_id)
         assert state_climate.state == STATE_OFF
         assert state_climate.attributes.get("hvac_action") == STATE_OFF
         assert state_climate.attributes.get("current_temperature") == 18.5
@@ -99,16 +112,14 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_login, by
         client._on_update_handler(
             EVT_DEVICE_ATTR_UPDATE, {"data": MOCK_DEVICE_ATTRS_WHEN_UPDATE}
         )
-        state_water_heater = hass.states.get(
-            "water_heater.vaillant_plus_1_water_heater"
-        )
+        state_water_heater = hass.states.get(water_heater_id)
         assert state_water_heater.attributes.get(ATTR_TEMPERATURE) == 60
         assert state_water_heater.attributes.get("min_temp") == 35.0
         assert state_water_heater.attributes.get("max_temp") == 65.0
         assert state_water_heater.attributes.get("target_temp_low") == 35.0
         assert state_water_heater.attributes.get("target_temp_high") == 65.0
 
-        state_climate = hass.states.get("climate.vaillant_plus_1_climate")
+        state_climate = hass.states.get(climate_id)
         assert state_climate.state == "heat"
         assert state_climate.attributes.get("hvac_action") == HVACAction.HEATING
         assert state_climate.attributes.get("current_temperature") == 20.5
