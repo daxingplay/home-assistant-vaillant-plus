@@ -19,5 +19,194 @@
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
+  },
+  "entity": {
+    "sensor": {
+      "burn_status": {
+        "name": "Burn status"
+      },
+      "ch_power": {
+        "name": "Central heating power raw"
+      },
+      "ch_start_times": {
+        "name": "Central heating start count"
+      },
+      "ch_work_time": {
+        "name": "Central heating work time"
+      },
+      "current_dhw_setpoint": {
+        "name": "Current domestic hot water setpoint"
+      },
+      "dhw_power": {
+        "name": "Domestic hot water power raw"
+      },
+      "dhw_read_setpoint": {
+        "name": "Domestic hot water read setpoint"
+      },
+      "dhw_setpoint": {
+        "name": "Domestic hot water setpoint"
+      },
+      "dhw_start_times": {
+        "name": "Domestic hot water start count"
+      },
+      "dhw_work_time": {
+        "name": "Domestic hot water work time"
+      },
+      "ebus_status": {
+        "name": "eBUS status"
+      },
+      "fan_speed": {
+        "name": "Fan speed"
+      },
+      "fan_status": {
+        "name": "Fan status"
+      },
+      "fault_list_1": {
+        "name": "Fault list 1"
+      },
+      "fault_list_2": {
+        "name": "Fault list 2"
+      },
+      "fault_list_3": {
+        "name": "Fault list 3"
+      },
+      "fault_list_4": {
+        "name": "Fault list 4"
+      },
+      "fault_list_5": {
+        "name": "Fault list 5"
+      },
+      "flow_temperature": {
+        "name": "Flow temperature"
+      },
+      "flow_temperature_setpoint": {
+        "name": "Flow temperature setpoint"
+      },
+      "gas_ch_consumption_monthly": {
+        "name": "Central heating gas consumption monthly raw"
+      },
+      "gas_ch_consumption_today": {
+        "name": "Central heating gas consumption today raw"
+      },
+      "gas_ch_consumption_yearly": {
+        "name": "Central heating gas consumption yearly raw"
+      },
+      "gas_ch_consumption_yesterday": {
+        "name": "Central heating gas consumption yesterday raw"
+      },
+      "gas_consumption": {
+        "name": "Gas consumption raw"
+      },
+      "gas_dhw_consumption_monthly": {
+        "name": "Domestic hot water gas consumption monthly raw"
+      },
+      "gas_dhw_consumption_today": {
+        "name": "Domestic hot water gas consumption today raw"
+      },
+      "gas_dhw_consumption_yearly": {
+        "name": "Domestic hot water gas consumption yearly raw"
+      },
+      "gas_dhw_consumption_yesterday": {
+        "name": "Domestic hot water gas consumption yesterday raw"
+      },
+      "gateway_fault_list_1": {
+        "name": "Gateway fault list 1"
+      },
+      "gateway_fault_list_2": {
+        "name": "Gateway fault list 2"
+      },
+      "gateway_fault_list_3": {
+        "name": "Gateway fault list 3"
+      },
+      "gateway_fault_list_4": {
+        "name": "Gateway fault list 4"
+      },
+      "gateway_fault_list_5": {
+        "name": "Gateway fault list 5"
+      },
+      "heating_curve": {
+        "name": "Heating curve"
+      },
+      "heating_system_setting": {
+        "name": "Heating system setting"
+      },
+      "lower_limitation_of_ch_setpoint": {
+        "name": "Lower limitation of central heating setpoint"
+      },
+      "lower_limitation_of_dhw_setpoint": {
+        "name": "Lower limitation of domestic hot water"
+      },
+      "maintenance_remain_time": {
+        "name": "Maintenance remain time"
+      },
+      "modbus_status": {
+        "name": "Modbus status"
+      },
+      "outdoor_temperature": {
+        "name": "Outdoor temperature"
+      },
+      "pump_status": {
+        "name": "Pump status"
+      },
+      "return_temperature": {
+        "name": "Return flow temperature"
+      },
+      "room_temperature": {
+        "name": "Room temperature"
+      },
+      "room_temperature_setpoint_comfort": {
+        "name": "Room temperature setpoint of comfort mode"
+      },
+      "room_temperature_setpoint_eco": {
+        "name": "Room temperature setpoint of ECO mode"
+      },
+      "tank_temperature": {
+        "name": "Water tank temperature"
+      },
+      "upper_limitation_of_ch_setpoint": {
+        "name": "Upper limitation of central heating setpoint"
+      },
+      "upper_limitation_of_dhw_setpoint": {
+        "name": "Upper limitation of domestic hot water"
+      },
+      "water_pressure": {
+        "name": "Water pressure"
+      },
+      "wifi_rssi": {
+        "name": "Wi-Fi RSSI"
+      }
+    },
+    "binary_sensor": {
+      "bmu_platform": {
+        "name": "BMU platform"
+      },
+      "boiler_info3_bit0": {
+        "name": "Boiler heating demand"
+      },
+      "boiler_info5_bit4": {
+        "name": "Boiler need refill water"
+      },
+      "circulation_enable": {
+        "name": "Circulation"
+      },
+      "enabled_dhw": {
+        "name": "Domestic hot water"
+      },
+      "enabled_heating": {
+        "name": "Heating boiler"
+      },
+      "heating_enable": {
+        "name": "Heating"
+      },
+      "rf_status": {
+        "name": "EBus status"
+      },
+      "warmstar_tank_loading_enable": {
+        "name": "WarmStar tank loading"
+      },
+      "weather_compensation": {
+        "name": "Weather compensation"
+      }
+    }
   }
 }

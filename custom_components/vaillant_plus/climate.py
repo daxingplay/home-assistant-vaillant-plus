@@ -80,6 +80,9 @@ async def async_setup_entry(
 class VaillantClimate(VaillantEntity, ClimateEntity):
     """Vaillant vSMART Climate."""
 
+    # The main feature of the device: it carries the device name itself.
+    _attr_has_entity_name = True
+
     def _heating_enabled_value(self) -> Any:
         """Return the current heating enable value from known API variants."""
         for attr in HEATING_ENABLE_ATTRS:

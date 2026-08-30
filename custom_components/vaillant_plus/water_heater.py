@@ -92,6 +92,9 @@ async def async_setup_entry(
 class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     """Vaillant vSMART Water Heater."""
 
+    # The main feature of the device: it carries the device name itself.
+    _attr_has_entity_name = True
+
     def _dhw_enabled_value(self) -> Any:
         """Return the current DHW enable value from known API variants."""
         for attr in DHW_ENABLE_ATTRS:

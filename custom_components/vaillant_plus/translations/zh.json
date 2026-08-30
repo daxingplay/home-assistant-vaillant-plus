@@ -25,5 +25,194 @@
                 "description": "选择威能壁挂炉完成设置"
             }
         }
+    },
+    "entity": {
+        "sensor": {
+            "burn_status": {
+                "name": "燃烧状态"
+            },
+            "ch_power": {
+                "name": "采暖功率（原始值）"
+            },
+            "ch_start_times": {
+                "name": "采暖启动次数"
+            },
+            "ch_work_time": {
+                "name": "采暖运行时长"
+            },
+            "current_dhw_setpoint": {
+                "name": "生活热水当前设置温度"
+            },
+            "dhw_power": {
+                "name": "生活热水功率（原始值）"
+            },
+            "dhw_read_setpoint": {
+                "name": "生活热水当前设定"
+            },
+            "dhw_setpoint": {
+                "name": "生活热水设置温度"
+            },
+            "dhw_start_times": {
+                "name": "生活热水启动次数"
+            },
+            "dhw_work_time": {
+                "name": "生活热水运行时长"
+            },
+            "ebus_status": {
+                "name": "eBUS 状态"
+            },
+            "fan_speed": {
+                "name": "风机转速"
+            },
+            "fan_status": {
+                "name": "风机状态"
+            },
+            "fault_list_1": {
+                "name": "故障列表 1"
+            },
+            "fault_list_2": {
+                "name": "故障列表 2"
+            },
+            "fault_list_3": {
+                "name": "故障列表 3"
+            },
+            "fault_list_4": {
+                "name": "故障列表 4"
+            },
+            "fault_list_5": {
+                "name": "故障列表 5"
+            },
+            "flow_temperature": {
+                "name": "供水温度"
+            },
+            "flow_temperature_setpoint": {
+                "name": "供水温度设定"
+            },
+            "gas_ch_consumption_monthly": {
+                "name": "采暖本月燃气消耗（原始值）"
+            },
+            "gas_ch_consumption_today": {
+                "name": "采暖今日燃气消耗（原始值）"
+            },
+            "gas_ch_consumption_yearly": {
+                "name": "采暖本年燃气消耗（原始值）"
+            },
+            "gas_ch_consumption_yesterday": {
+                "name": "采暖昨日燃气消耗（原始值）"
+            },
+            "gas_consumption": {
+                "name": "燃气消耗（原始值）"
+            },
+            "gas_dhw_consumption_monthly": {
+                "name": "热水本月燃气消耗（原始值）"
+            },
+            "gas_dhw_consumption_today": {
+                "name": "热水今日燃气消耗（原始值）"
+            },
+            "gas_dhw_consumption_yearly": {
+                "name": "热水本年燃气消耗（原始值）"
+            },
+            "gas_dhw_consumption_yesterday": {
+                "name": "热水昨日燃气消耗（原始值）"
+            },
+            "gateway_fault_list_1": {
+                "name": "网关故障列表 1"
+            },
+            "gateway_fault_list_2": {
+                "name": "网关故障列表 2"
+            },
+            "gateway_fault_list_3": {
+                "name": "网关故障列表 3"
+            },
+            "gateway_fault_list_4": {
+                "name": "网关故障列表 4"
+            },
+            "gateway_fault_list_5": {
+                "name": "网关故障列表 5"
+            },
+            "heating_curve": {
+                "name": "采暖曲线"
+            },
+            "heating_system_setting": {
+                "name": "采暖系统设置"
+            },
+            "lower_limitation_of_ch_setpoint": {
+                "name": "暖气最小设置温度"
+            },
+            "lower_limitation_of_dhw_setpoint": {
+                "name": "生活热水最小设置温度"
+            },
+            "maintenance_remain_time": {
+                "name": "距下次保养时间"
+            },
+            "modbus_status": {
+                "name": "Modbus 状态"
+            },
+            "outdoor_temperature": {
+                "name": "室外温度"
+            },
+            "pump_status": {
+                "name": "水泵状态"
+            },
+            "return_temperature": {
+                "name": "回水温度"
+            },
+            "room_temperature": {
+                "name": "室内温度"
+            },
+            "room_temperature_setpoint_comfort": {
+                "name": "舒适模式室温设定"
+            },
+            "room_temperature_setpoint_eco": {
+                "name": "ECO 模式室温设定"
+            },
+            "tank_temperature": {
+                "name": "水箱温度"
+            },
+            "upper_limitation_of_ch_setpoint": {
+                "name": "暖气最大设置温度"
+            },
+            "upper_limitation_of_dhw_setpoint": {
+                "name": "生活热水最大设置温度"
+            },
+            "water_pressure": {
+                "name": "供暖水压"
+            },
+            "wifi_rssi": {
+                "name": "Wi-Fi 信号强度"
+            }
+        },
+        "binary_sensor": {
+            "bmu_platform": {
+                "name": "BMU 平台"
+            },
+            "boiler_info3_bit0": {
+                "name": "壁挂炉采暖需求"
+            },
+            "boiler_info5_bit4": {
+                "name": "水箱是否缺水"
+            },
+            "circulation_enable": {
+                "name": "循环泵状态"
+            },
+            "enabled_dhw": {
+                "name": "生活热水开启状态"
+            },
+            "enabled_heating": {
+                "name": "壁挂炉采暖状态"
+            },
+            "heating_enable": {
+                "name": "暖气开启状态"
+            },
+            "rf_status": {
+                "name": "eBUS 连接状态"
+            },
+            "warmstar_tank_loading_enable": {
+                "name": "生活热水状态"
+            },
+            "weather_compensation": {
+                "name": "气候补偿状态"
+            }
+        }
     }
 }
