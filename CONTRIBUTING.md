@@ -7,6 +7,29 @@ Contributing to this project should be as easy and transparent as possible, whet
 - Submitting a fix
 - Proposing new features
 
+## Development environment
+
+Home Assistant 2024.2 is the oldest release this integration supports, and it
+needs Python 3.11 or newer; the most recent releases need 3.14. If your system
+Python is older than that, `scripts/setup` installs a suitable interpreter with
+[uv](https://docs.astral.sh/uv/) — no root required — and creates a `.venv`
+with the test dependencies:
+
+```bash
+scripts/setup
+.venv/bin/python -m pytest
+```
+
+To reproduce a specific entry of the CI matrix, pick the Python that Home
+Assistant release supports and pin the matching
+`pytest-homeassistant-custom-component`:
+
+```bash
+PYTHON_VERSION=3.13 scripts/setup
+.venv/bin/python -m pip install pytest-homeassistant-custom-component==0.13.272  # Home Assistant 2025.8.3
+.venv/bin/python -m pytest
+```
+
 ## Github is used for everything
 
 Github is used to host code, to track issues and feature requests, as well as accept pull requests.

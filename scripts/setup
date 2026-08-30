@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Create a local development environment able to run the test suite.
+#
+# The supported Home Assistant releases need a Python this repository's
+# checkout may not have: 2024.2 needs 3.11+, 2025.3 needs 3.13+, and 2026.6
+# needs 3.14+. uv installs a standalone interpreter without root, so the
+# suite can be run locally against the same Home Assistant the CI matrix uses.
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+PYTHON_VERSION="${PYTHON_VERSION:-3.14}"
+
+if ! command -v uv >/dev/null 2>&1; then
+    echo "Installing uv..."
+    python3 -m pip install --quiet --user uv
+    export PATH="${HOME}/.local/bin:${PATH}"
+fi
+
+uv python install "${PYTHON_VERSION}"
+uv venv --python "${PYTHON_VERSION}" .venv
+uv pip install --python .venv/bin/python -r requirements_test.txt
+
+echo
+echo "Done. Run the tests with:"
+echo "    .venv/bin/python -m pytest"
+echo
+echo "To test against another Home Assistant release, pin it the way the CI"
+echo "matrix does and pick a Python that release supports:"
+echo "    PYTHON_VERSION=3.13 scripts/setup"
+echo "    .venv/bin/python -m pip install pytest-homeassistant-custom-component==0.13.272"
