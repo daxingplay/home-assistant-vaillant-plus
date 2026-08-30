@@ -1,13 +1,18 @@
 """Config flow for Vaillant Plus integration."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
+from aiohttp import ClientError
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
 from vaillant_plus_cn_api import (
     Device,
+    InvalidAuthError,
+    InvalidCredentialsError,
+    RequestError,
     Token,
     VaillantApiClient,
 )
@@ -64,22 +69,46 @@ class VaillantPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             user_info = await client.login(
                 user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
             )
-        except Exception:
-            _LOGGER.exception("Unexpected exception")
+        except (InvalidCredentialsError, InvalidAuthError):
             errors["base"] = "invalid_auth"
+        except (RequestError, ClientError, asyncio.TimeoutError):
+            _LOGGER.exception("Cannot reach the Vaillant cloud")
+            errors["base"] = "cannot_connect"
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception("Unexpected exception")
+            errors["base"] = "unknown"
         else:
             self._cloud_token = user_info
-            device_list = await client.get_device_list()
-            if len(device_list) == 0:
-                errors["base"] = "no_devices"
+
+            try:
+                device_list = await client.get_device_list()
+            except (InvalidCredentialsError, InvalidAuthError):
+                errors["base"] = "invalid_auth"
+            except (RequestError, ClientError, asyncio.TimeoutError):
+                _LOGGER.exception("Cannot reach the Vaillant cloud")
+                errors["base"] = "cannot_connect"
+            except (TypeError, KeyError, IndexError, AttributeError):
+                # The cloud returns entries the API library cannot model, for
+                # instance a device with `"modelInfo": null` such as an
+                # eloCIRC. See issues #27 and #28.
+                _LOGGER.exception(
+                    "Failed to read the device list. This account probably owns a"
+                    " device this integration does not support yet"
+                )
+                errors["base"] = "unsupported_device"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
             else:
-                for device_info in device_list:
-                    product_name = device_info.product_name
-                    # mac_addr = device_info["mac"]
-                    device_id = device_info.id
-                    device_name = f"{product_name}_{device_id}"
-                    self._cloud_devices[device_name] = device_info
-                return await self.async_step_select()
+                if len(device_list) == 0:
+                    errors["base"] = "no_devices"
+                else:
+                    for device_info in device_list:
+                        product_name = device_info.product_name
+                        device_id = device_info.id
+                        device_name = f"{product_name}_{device_id}"
+                        self._cloud_devices[device_name] = device_info
+                    return await self.async_step_select()
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors

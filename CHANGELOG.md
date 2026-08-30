@@ -1,6 +1,11 @@
 # Changelog
 
 <!--next-version-placeholder-->
+## v1.2.9 (2026-08-30)
+* [#27](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/27) [#28](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/28) The device list is now fetched inside the config flow's error handling, so a device the API library cannot describe shows a proper "unsupported device" message instead of aborting the flow with an unhandled `TypeError` that looked like a login failure.
+* Login failures are no longer all reported as `invalid_auth`: wrong credentials, an unreachable server and unexpected errors are told apart, so network problems stop looking like a wrong password.
+* Add the missing `no_devices` message to the strings and translations, and fix the Chinese translation of `unknown` (位置错误 → 未知错误).
+
 ## v1.2.8 (2026-08-30)
 * [#27](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/27) [#28](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/28) Require `vaillant-plus-cn-api` 2.0.1, which no longer crashes on accounts containing a device it cannot describe. Previously a single such device (for example an eloCIRC 循环水魔方, returned by the cloud with `"modelInfo": null`) raised `TypeError: 'NoneType' object is not subscriptable` while reading the device list, so the integration could not be set up at all — including for the supported devices in the same account.
 

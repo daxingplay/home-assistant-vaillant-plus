@@ -6,7 +6,9 @@
         "error": {
             "cannot_connect": "Falha na ligação",
             "invalid_auth": "Falha na autenticação",
-            "unknown": "Erro desconhecido"
+            "unknown": "Erro desconhecido",
+            "no_devices": "Não foi encontrado nenhum equipamento Vaillant suportado nesta conta.",
+            "unsupported_device": "Não foi possível ler a lista de equipamentos. Esta conta contém provavelmente um equipamento ainda não suportado por esta integração; por favor abra um issue com o registo de depuração."
         },
         "step": {
             "user": {
