@@ -4,7 +4,8 @@ on:
   pull_request:
   push:
   schedule:
-    - cron:  '0 0 * * *'
+    # Weekly, to catch breakage from new Home Assistant releases.
+    - cron:  '0 0 * * 1'
   workflow_dispatch:
 
 jobs:
