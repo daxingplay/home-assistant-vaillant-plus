@@ -1,6 +1,8 @@
 """Test vaillant-plus climate."""
 from unittest.mock import patch
 
+import pytest
+
 from homeassistant.components.climate.const import (
     PRESET_COMFORT,
     PRESET_ECO,
@@ -116,3 +118,57 @@ async def test_water_heater_operation_is_applied_optimistically(
         await water_heater.async_turn_on()
 
     assert water_heater.current_operation == WATER_HEATER_ON
+
+
+async def test_climate_failed_command_raises_and_does_not_change_state(
+    hass, device_api_client
+):
+    """A command that never reached the cloud must not look successful.
+
+    `control_device` returns False once it has exhausted its retries, and
+    nothing re-sends the command, so the device keeps its old state.
+    """
+    from homeassistant.exceptions import HomeAssistantError
+
+    device_api_client._device_attrs = {
+        "Heating_Enable": 1,
+        "Room_Temperature_Setpoint_Comfort": 22,
+    }
+    climate = VaillantClimate(device_api_client)
+
+    with patch(
+        "custom_components.vaillant_plus.VaillantClient.control_device",
+        return_value=False,
+    ):
+        with pytest.raises(HomeAssistantError):
+            await climate.async_set_temperature(temperature=24)
+
+        with pytest.raises(HomeAssistantError):
+            await climate.async_turn_off()
+
+    assert climate.target_temperature == 22
+    assert climate.hvac_mode == HVACMode.HEAT
+
+
+async def test_water_heater_failed_command_raises(hass, device_api_client):
+    """The same for the water heater."""
+    from homeassistant.exceptions import HomeAssistantError
+
+    from custom_components.vaillant_plus.const import WATER_HEATER_OFF
+    from custom_components.vaillant_plus.water_heater import VaillantWaterHeater
+
+    device_api_client._device_attrs = {
+        "DHW_setpoint": 45,
+        "WarmStar_Tank_Loading_Enable": 0,
+    }
+    water_heater = VaillantWaterHeater(device_api_client)
+
+    with patch(
+        "custom_components.vaillant_plus.VaillantClient.control_device",
+        return_value=False,
+    ):
+        with pytest.raises(HomeAssistantError):
+            await water_heater.async_turn_on()
+
+    assert water_heater.current_operation == WATER_HEATER_OFF
+    assert water_heater.target_temperature == 45
