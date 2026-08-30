@@ -142,6 +142,9 @@
       "modbus_status": {
         "name": "Modbus status"
       },
+      "mode_setting_ch": {
+        "name": "Central heating mode setting"
+      },
       "outdoor_temperature": {
         "name": "Outdoor temperature"
       },

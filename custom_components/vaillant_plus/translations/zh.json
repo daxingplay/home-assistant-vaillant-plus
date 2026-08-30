@@ -148,6 +148,9 @@
             "modbus_status": {
                 "name": "Modbus 状态"
             },
+            "mode_setting_ch": {
+                "name": "采暖模式设置"
+            },
             "outdoor_temperature": {
                 "name": "室外温度"
             },
