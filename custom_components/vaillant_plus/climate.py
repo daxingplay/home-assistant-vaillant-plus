@@ -29,16 +29,11 @@ PRESET_SUMMER = "Summer"
 PRESET_WINTER = "Winter"
 
 SUPPORTED_FEATURES = (
-    ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE
+    ClimateEntityFeature.TARGET_TEMPERATURE
+    | ClimateEntityFeature.PRESET_MODE
+    | ClimateEntityFeature.TURN_ON
+    | ClimateEntityFeature.TURN_OFF
 )
-
-# `TURN_ON`/`TURN_OFF` only exist from Home Assistant 2024.2 on, where a
-# climate entity must advertise them for climate.turn_on / climate.turn_off to
-# be accepted; older releases register the services unconditionally.
-_TURN_ON_FEATURE = getattr(ClimateEntityFeature, "TURN_ON", None)
-_TURN_OFF_FEATURE = getattr(ClimateEntityFeature, "TURN_OFF", None)
-if _TURN_ON_FEATURE is not None and _TURN_OFF_FEATURE is not None:
-    SUPPORTED_FEATURES |= _TURN_ON_FEATURE | _TURN_OFF_FEATURE
 SUPPORTED_HVAC_MODES = [HVACMode.HEAT, HVACMode.OFF]
 SUPPORTED_PRESET_MODES = [PRESET_COMFORT]
 
