@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    EntityCategory,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfPressure,
     UnitOfTemperature,
@@ -19,21 +20,12 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-try:  # Home Assistant >= 2022.4
-    from homeassistant.const import EntityCategory
-except ImportError:  # pragma: no cover - older Home Assistant releases
-    from homeassistant.helpers.entity import EntityCategory
-
 from .client import VaillantClient
-from .compat import with_translation_key
 from .const import CONF_DID, DOMAIN, API_CLIENT
 from .discovery import async_register_discovery
 from .entity import VaillantEntity
 
 _LOGGER = logging.getLogger(__name__)
-
-# Home Assistant < 2023.1 has no `translation_key` on entity descriptions.
-SensorEntityDescription = with_translation_key(SensorEntityDescription)
 
 
 SENSOR_DESCRIPTIONS = (

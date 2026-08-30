@@ -39,28 +39,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # python-version:
-        #   - 3.11
-        # pytest-homeassistant-custom-component-version:
-        #   - 0.13.36
+        # Home Assistant 2024.2 is the oldest supported release; see hacs.json.
         include:
-          - python-version: 3.9
-            pytest-homeassistant-custom-component-version: 0.12.29
-          - python-version: "3.10"
-            pytest-homeassistant-custom-component-version: 0.12.29
-          - python-version: 3.11
-            pytest-homeassistant-custom-component-version: 0.12.29
-          - python-version: "3.10"
-            pytest-homeassistant-custom-component-version: 0.12.52
-          - python-version: "3.10"
-            pytest-homeassistant-custom-component-version: 0.12.57
-          - python-version: "3.10"
-            pytest-homeassistant-custom-component-version: 0.13.0
-          - python-version: "3.10"
-            pytest-homeassistant-custom-component-version: 0.13.32
-          - python-version: "3.11"
-            pytest-homeassistant-custom-component-version: 0.13.36
           - python-version: "3.12"
+            # Home Assistant 2024.2.0, the oldest release this integration supports
             pytest-homeassistant-custom-component-version: 0.13.99
           - python-version: "3.12"
             # 0.13.128+ avoids mypy-dev, but 0.13.128 has josepy/acme incompatibility. From this version, will force to install josepy<2 in the task to avoid the incompatibility.

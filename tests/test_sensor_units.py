@@ -11,8 +11,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
 
 # Device classes that Home Assistant refuses to accept without a unit.
@@ -71,12 +69,9 @@ def test_descriptions_with_device_class_declare_a_unit():
 
 def test_native_units_are_valid_for_their_device_class():
     """Validate the descriptions against the running Home Assistant version."""
-    from custom_components.vaillant_plus.sensor import SENSOR_DESCRIPTIONS
+    from homeassistant.components.sensor import DEVICE_CLASS_UNITS
 
-    try:
-        from homeassistant.components.sensor import DEVICE_CLASS_UNITS
-    except ImportError:  # pragma: no cover - very old Home Assistant releases
-        pytest.skip("Home Assistant version does not expose DEVICE_CLASS_UNITS")
+    from custom_components.vaillant_plus.sensor import SENSOR_DESCRIPTIONS
 
     invalid = []
     for description in SENSOR_DESCRIPTIONS:

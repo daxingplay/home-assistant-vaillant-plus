@@ -50,14 +50,12 @@ async def test_water_heater_actions(hass, device_api_client):
 
 
 async def test_water_heater_supports_turn_on_off(hass, device_api_client):
-    """The on/off feature must be advertised when the running HA supports it."""
+    """The on/off feature must be advertised, or the services are rejected."""
     from homeassistant.components.water_heater import WaterHeaterEntityFeature
 
     water_heater = VaillantWaterHeater(device_api_client)
 
-    on_off = getattr(WaterHeaterEntityFeature, "ON_OFF", None)
-    if on_off is not None:
-        assert water_heater.supported_features & on_off
+    assert water_heater.supported_features & WaterHeaterEntityFeature.ON_OFF
     assert water_heater.supported_features & WaterHeaterEntityFeature.OPERATION_MODE
 
 

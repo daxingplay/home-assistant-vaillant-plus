@@ -5,12 +5,8 @@ from typing import Any
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
-
-try:  # Home Assistant >= 2022.3, canonical location since the entity helper split
-    from homeassistant.helpers.device_registry import DeviceInfo
-except ImportError:  # pragma: no cover - older Home Assistant releases
-    from homeassistant.helpers.entity import DeviceInfo
 from vaillant_plus_cn_api import Device
 
 from .client import VaillantClient
