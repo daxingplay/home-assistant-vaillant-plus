@@ -25,10 +25,12 @@ Assistant release supports and pin the matching
 `pytest-homeassistant-custom-component`:
 
 ```bash
-PYTHON_VERSION=3.13 scripts/setup
-.venv/bin/python -m pip install pytest-homeassistant-custom-component==0.13.272  # Home Assistant 2025.8.3
+PYTHON_VERSION=3.13 PHCC_VERSION=0.13.272 scripts/setup  # Home Assistant 2025.8.3
 .venv/bin/python -m pytest
 ```
+
+Each entry in `.github/workflows/actions.yml` names the Home Assistant version
+it pins, so the two values can be read straight off the matrix.
 
 ## Github is used for everything
 

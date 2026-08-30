@@ -93,6 +93,12 @@ jobs:
           if [[ "${{ matrix.python-version }}" == "3.12" ]] && [[ "$(printf '%s\n' "0.13.128" "${{ matrix.pytest-homeassistant-custom-component-version }}" | sort -V | tail -1)" == "${{ matrix.pytest-homeassistant-custom-component-version }}" ]]; then
             python3 -m pip install 'josepy<2'
           fi
+          # aiodns < 3.6 declares `pycares>=4.9.0` with no upper bound, but
+          # pycares 5 removed symbols aiodns uses at import time. Only the
+          # matrix entries pinning such an aiodns need the older pycares.
+          if python3 -c "import sys; from importlib.metadata import version; from packaging.version import Version; sys.exit(0 if Version(version('aiodns')) < Version('3.6') else 1)"; then
+            python3 -m pip install 'pycares<5'
+          fi
       - name: Run tests
         run: |
           pytest \
