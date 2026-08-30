@@ -220,6 +220,11 @@ SENSOR_DESCRIPTIONS = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
+        key="Mode_Setting_CH",
+        name="Central heating mode setting",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
         key="Heating_System_Setting",
         name="Heating system setting",
         entity_category=EntityCategory.DIAGNOSTIC,
