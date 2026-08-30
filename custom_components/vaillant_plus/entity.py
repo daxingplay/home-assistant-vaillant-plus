@@ -3,6 +3,7 @@ import logging
 from typing import Any
 
 from homeassistant.core import callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 
@@ -101,7 +102,22 @@ class VaillantEntity(Entity):
             self.async_write_ha_state()
 
     async def send_command(self, attr: str, value: Any) -> None:
-        """Send operations to cloud."""
-        await self._client.control_device({
-            f"{attr}": value
-        })
+        """Send one attribute to the cloud and apply it locally."""
+        await self.send_commands({attr: value})
+
+    async def send_commands(self, attrs: dict[str, Any]) -> None:
+        """Send attributes to the cloud and apply them locally.
+
+        `control_device` returns False once it has exhausted its retries, which
+        means the command never reached the cloud and nothing will re-send it.
+        Raise, so the failure reaches the user instead of looking like a
+        successful command, and do not apply the values locally: the device
+        still holds its old state.
+        """
+        if not await self._client.control_device(attrs):
+            raise HomeAssistantError(
+                f"Failed to send {list(attrs)} to the Vaillant cloud"
+            )
+
+        for attr, value in attrs.items():
+            self.set_optimistic_value(attr, value)

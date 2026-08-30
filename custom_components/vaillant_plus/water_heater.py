@@ -190,7 +190,6 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
         _LOGGER.debug("Setting target temperature to: %s", new_temperature)
 
         await self.send_command("DHW_setpoint", new_temperature)
-        self.set_optimistic_value("DHW_setpoint", new_temperature)
 
     async def _async_set_dhw_enabled(self, enabled: bool) -> None:
         """Turn domestic hot water on or off."""
@@ -199,7 +198,6 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
         _LOGGER.debug("Setting operation mode to: %s", value)
 
         await self.send_command("WarmStar_Tank_Loading_Enable", value)
-        self.set_optimistic_value("WarmStar_Tank_Loading_Enable", value)
 
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set new target operation mode."""

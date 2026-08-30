@@ -3,7 +3,8 @@
 <!--next-version-placeholder-->
 ## v1.3.0 (2026-08-30)
 * Support `climate.turn_on` / `climate.turn_off`, so scripts and device actions can switch the central heating on and off. Home Assistant 2024.2 and later only accept these on entities that advertise the feature, the same gap [#34](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/34) hit on the water heater.
-* Commands are applied to the entity state immediately instead of waiting for the cloud to echo them back over the websocket, so the UI no longer snaps back to the old value for a few seconds after a change.
+* A command that could not be delivered now raises instead of being silently ignored. `control_device` gives up after three failed attempts and nothing re-sends the command, but its result was discarded, so a failed command looked exactly like a successful one.
+* Successful commands are applied to the entity state immediately instead of waiting for the cloud to echo them back over the websocket, so the UI no longer snaps back to the old value for a few seconds after a change. Failed commands leave the state untouched, since the device still holds its old value.
 * Expose the central heating mode setting (`Mode_Setting_CH`) as a diagnostic sensor.
 
 ## v1.2.9 (2026-08-30)
