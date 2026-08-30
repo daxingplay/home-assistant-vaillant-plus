@@ -74,8 +74,8 @@ async def test_successful_config_flow(
 # We use the `error_login_fixture` mock instead of `bypass_login`
 # (note the function parameters) to raise an Exception during
 # validation of the input config.
-async def test_failed_config_flow(hass: HomeAssistant, error_on_login):
-    """Test a failed config flow due to credential validation failure."""
+async def _submit_user_step(hass: HomeAssistant) -> FlowResult:
+    """Run the user step with the mock credentials."""
     result: FlowResult = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
@@ -83,12 +83,52 @@ async def test_failed_config_flow(hass: HomeAssistant, error_on_login):
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "user"
 
-    result = await hass.config_entries.flow.async_configure(
+    return await hass.config_entries.flow.async_configure(
         result["flow_id"], user_input=MOCK_INPUT
     )
 
+
+async def test_failed_config_flow(hass: HomeAssistant, error_on_login):
+    """An unexpected error must not be reported as a credential problem."""
+    result = await _submit_user_step(hass)
+
+    assert result["type"] == FlowResultType.FORM
+    assert result["errors"] == {"base": "unknown"}
+
+
+async def test_failed_config_flow_invalid_credentials(
+    hass: HomeAssistant, invalid_credentials_on_login
+):
+    """A wrong username/password combination is reported as such."""
+    result = await _submit_user_step(hass)
+
     assert result["type"] == FlowResultType.FORM
     assert result["errors"] == {"base": "invalid_auth"}
+
+
+async def test_failed_config_flow_cannot_connect(
+    hass: HomeAssistant, connection_error_on_login
+):
+    """An unreachable API host must not be reported as a credential problem."""
+    result = await _submit_user_step(hass)
+
+    assert result["type"] == FlowResultType.FORM
+    assert result["errors"] == {"base": "cannot_connect"}
+
+
+async def test_failed_config_flow_unsupported_device(
+    hass: HomeAssistant, bypass_login, unsupported_device_on_get_device_list
+):
+    """A device the API library cannot model must not crash the flow.
+
+    Reported in issues #27 and #28: an account owning an eloCIRC made
+    `get_device_list()` raise `TypeError` outside the try block, so the flow
+    died with an unhandled exception instead of showing an error.
+    """
+    result = await _submit_user_step(hass)
+
+    assert result["type"] == FlowResultType.FORM
+    assert result["errors"] == {"base": "unsupported_device"}
 
 
 async def test_failed_config_flow_no_device(

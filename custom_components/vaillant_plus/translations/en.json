@@ -6,7 +6,9 @@
         "error": {
             "cannot_connect": "Failed to connect",
             "invalid_auth": "Invalid authentication",
-            "unknown": "Unexpected error"
+            "unknown": "Unexpected error",
+            "no_devices": "No supported Vaillant device was found in this account.",
+            "unsupported_device": "The device list could not be read. This account probably contains a device this integration does not support yet; please open an issue with the debug log."
         },
         "step": {
             "user": {

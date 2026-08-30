@@ -6,7 +6,9 @@
         "error": {
             "cannot_connect": "无法连接服务器",
             "invalid_auth": "验证失败",
-            "unknown": "位置错误"
+            "unknown": "未知错误",
+            "no_devices": "该账号下没有找到支持的威能设备",
+            "unsupported_device": "无法读取设备列表，该账号下可能存在本集成尚不支持的设备（例如循环水魔方）。请打开调试日志后提交 issue。"
         },
         "step": {
             "user": {

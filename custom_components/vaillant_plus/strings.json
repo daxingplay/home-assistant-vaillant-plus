@@ -12,7 +12,9 @@
     "error": {
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
       "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-      "unknown": "[%key:common::config_flow::error::unknown%]"
+      "unknown": "[%key:common::config_flow::error::unknown%]",
+      "no_devices": "No supported Vaillant device was found in this account.",
+      "unsupported_device": "The device list could not be read. This account probably contains a device this integration does not support yet; please open an issue with the debug log."
     },
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"

@@ -18,7 +18,13 @@
 from unittest.mock import patch, MagicMock, AsyncMock
 
 import pytest
-from vaillant_plus_cn_api import Device, InvalidAuthError, Token
+from vaillant_plus_cn_api import (
+    Device,
+    InvalidAuthError,
+    InvalidCredentialsError,
+    RequestError,
+    Token,
+)
 
 from .const import MOCK_PASSWORD, MOCK_USERNAME
 
@@ -153,6 +159,39 @@ def error_login_fixture():
     with patch(
         "vaillant_plus_cn_api.VaillantApiClient.login",
         side_effect=Exception,
+    ):
+        yield
+
+
+# Wrong username/password combination.
+@pytest.fixture(name="invalid_credentials_on_login")
+def invalid_credentials_on_login_fixture():
+    """Simulate a wrong username/password combination."""
+    with patch(
+        "vaillant_plus_cn_api.VaillantApiClient.login",
+        side_effect=InvalidCredentialsError,
+    ):
+        yield
+
+
+# The Vaillant cloud cannot be reached at all.
+@pytest.fixture(name="connection_error_on_login")
+def connection_error_on_login_fixture():
+    """Simulate an unreachable API host."""
+    with patch(
+        "vaillant_plus_cn_api.VaillantApiClient.login",
+        side_effect=RequestError,
+    ):
+        yield
+
+
+# The account owns a device the API library cannot model, see issues #27/#28.
+@pytest.fixture(name="unsupported_device_on_get_device_list")
+def unsupported_device_on_get_device_list_fixture():
+    """Simulate a device returned with `"modelInfo": null`."""
+    with patch(
+        "vaillant_plus_cn_api.VaillantApiClient.get_device_list",
+        side_effect=TypeError("'NoneType' object is not subscriptable"),
     ):
         yield
 
