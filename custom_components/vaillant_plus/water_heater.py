@@ -46,15 +46,8 @@ DHW_SETPOINT_ATTRS = ("Current_DHW_Setpoint", "DHW_readSetPoint", "DHW_setpoint"
 SUPPORTED_FEATURES = (
     WaterHeaterEntityFeature.TARGET_TEMPERATURE
     | WaterHeaterEntityFeature.OPERATION_MODE
+    | WaterHeaterEntityFeature.ON_OFF
 )
-
-# `ON_OFF` only exists from Home Assistant 2024.2 on. Older releases register
-# the turn_on/turn_off services unconditionally, newer ones require the entity
-# to advertise the feature, otherwise the action fails with
-# "Entity ... does not support action water_heater.turn_on".
-_ON_OFF_FEATURE = getattr(WaterHeaterEntityFeature, "ON_OFF", None)
-if _ON_OFF_FEATURE is not None:
-    SUPPORTED_FEATURES |= _ON_OFF_FEATURE
 
 
 async def async_setup_entry(
@@ -91,6 +84,9 @@ async def async_setup_entry(
 
 class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     """Vaillant vSMART Water Heater."""
+
+    # The main feature of the device: it carries the device name itself.
+    _attr_has_entity_name = True
 
     def _dhw_enabled_value(self) -> Any:
         """Return the current DHW enable value from known API variants."""

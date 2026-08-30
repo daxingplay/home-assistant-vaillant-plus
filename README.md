@@ -14,6 +14,10 @@
 
 Home Assistant custom component for controlling vSmart in Vaillant+ cn app.
 
+## Requirements
+
+Home Assistant 2024.2 or later.
+
 ## Screenshot
 
 ![screenshot](docs/images/screenshot-all.jpg)

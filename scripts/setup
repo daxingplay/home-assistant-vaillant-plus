@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Create a local development environment able to run the test suite.
+#
+# The supported Home Assistant releases need a Python this repository's
+# checkout may not have: 2024.2 needs 3.11+, 2025.3 needs 3.13+, and 2026.6
+# needs 3.14+. uv installs a standalone interpreter without root, so the
+# suite can be run locally against the same Home Assistant the CI matrix uses.
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+# Defaults match the newest entry of the CI matrix. Set both to reproduce
+# another entry, e.g. PYTHON_VERSION=3.13 PHCC_VERSION=0.13.272 (Home
+# Assistant 2025.8.3); the Python must be one that release supports.
+PYTHON_VERSION="${PYTHON_VERSION:-3.14}"
+PHCC_VERSION="${PHCC_VERSION:-}"
+
+if ! command -v uv >/dev/null 2>&1; then
+    echo "Installing uv..."
+    python3 -m pip install --quiet --user uv
+    export PATH="${HOME}/.local/bin:${PATH}"
+fi
+
+uv python install "${PYTHON_VERSION}"
+uv venv --python "${PYTHON_VERSION}" .venv
+REQUIREMENTS="requirements_test.txt"
+if [[ -n "${PHCC_VERSION}" ]]; then
+    # Written next to the original: it includes requirements_dev.txt by a
+    # relative path, which only resolves from the repository root.
+    REQUIREMENTS="$(mktemp -p . requirements_test.XXXXXX.txt)"
+    trap 'rm -f "${REQUIREMENTS}"' EXIT
+    sed "s/pytest-homeassistant-custom-component==.*/pytest-homeassistant-custom-component==${PHCC_VERSION}/" \
+        requirements_test.txt > "${REQUIREMENTS}"
+fi
+
+uv pip install --python .venv/bin/python -r "${REQUIREMENTS}"
+
+# aiodns < 3.6 declares `pycares>=4.9.0` with no upper bound, but pycares 5
+# removed symbols aiodns uses at import time, so importing Home Assistant
+# fails. The CI matrix carries the same guard.
+if .venv/bin/python -c "import sys; from importlib.metadata import version; from packaging.version import Version; sys.exit(0 if Version(version('aiodns')) < Version('3.6') else 1)"; then
+    uv pip install --python .venv/bin/python 'pycares<5'
+fi
+
+echo
+echo "Done. Run the tests with:"
+echo "    .venv/bin/python -m pytest"
+echo
+echo "To test against another Home Assistant release, reproduce a CI matrix entry:"
+echo "    PYTHON_VERSION=3.13 PHCC_VERSION=0.13.272 scripts/setup   # HA 2025.8.3"
