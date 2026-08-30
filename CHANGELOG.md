@@ -3,7 +3,11 @@
 <!--next-version-placeholder-->
 ## v1.4.0 (2026-08-30)
 * Entity names are now translatable. Every sensor and binary sensor carries a `translation_key`, and Chinese names are provided for all of them, so the entities show as 供水温度 / 水箱温度 / 暖气开启状态 rather than English. Home Assistant releases without entity translation support, and languages without a translation, keep the English names. Chinese wording follows [@elwinchen1986](https://github.com/elwinchen1986)'s fork where it had a name for an attribute.
-* Entities now use `has_entity_name`, so Home Assistant composes the friendly name from the device name and the entity name, and the climate and water heater entities take the device name itself. Existing entity ids are unaffected; the names shown in the UI change.
+* **The displayed names of your entities change.** Entities now use `has_entity_name`, which is what allows Home Assistant to translate them, and it also makes Home Assistant compose the friendly name from the device name and the entity name — `Flow temperature` becomes `威精灵 供水温度`. The climate and water heater entities, which had no name of their own, now show the device name instead of their entity id.
+  * **Entity ids do not change**, so automations, scripts and dashboards keep working. Only the displayed names do.
+  * Anything that keys on the *name* rather than the entity id — an automatically titled dashboard card, a voice assistant phrase, a template matching `friendly_name` — will see the new name.
+  * New installations get device-prefixed entity ids (`sensor.wei_jing_ling_flow_temperature`); existing installations keep the ids they already have.
+
 
 ## v1.3.0 (2026-08-30)
 * Support `climate.turn_on` / `climate.turn_off`, so scripts and device actions can switch the central heating on and off. Home Assistant 2024.2 and later only accept these on entities that advertise the feature, the same gap [#34](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/34) hit on the water heater.
