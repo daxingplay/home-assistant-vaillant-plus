@@ -31,6 +31,14 @@ PRESET_WINTER = "Winter"
 SUPPORTED_FEATURES = (
     ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE
 )
+
+# `TURN_ON`/`TURN_OFF` only exist from Home Assistant 2024.2 on, where a
+# climate entity must advertise them for climate.turn_on / climate.turn_off to
+# be accepted; older releases register the services unconditionally.
+_TURN_ON_FEATURE = getattr(ClimateEntityFeature, "TURN_ON", None)
+_TURN_OFF_FEATURE = getattr(ClimateEntityFeature, "TURN_OFF", None)
+if _TURN_ON_FEATURE is not None and _TURN_OFF_FEATURE is not None:
+    SUPPORTED_FEATURES |= _TURN_ON_FEATURE | _TURN_OFF_FEATURE
 SUPPORTED_HVAC_MODES = [HVACMode.HEAT, HVACMode.OFF]
 SUPPORTED_PRESET_MODES = [PRESET_COMFORT]
 
@@ -144,7 +152,7 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         Return the currently running HVAC action.
         """
 
-        if self._heating_enabled_value() == 0:
+        if self._heating_enabled_value() in (0, False):
             return HVACAction.OFF
 
         try:
@@ -178,11 +186,21 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
             await self._client.control_device({
                 "Heating_Enable": False,
             })
+            self.set_optimistic_value("Heating_Enable", 0)
         elif hvac_mode == HVACMode.HEAT:
             await self._client.control_device({
                 "Heating_Enable": True,
                 "Mode_Setting_CH": "Cruising",
             })
+            self.set_optimistic_value("Heating_Enable", 1)
+
+    async def async_turn_on(self) -> None:
+        """Turn the central heating on."""
+        await self.async_set_hvac_mode(HVACMode.HEAT)
+
+    async def async_turn_off(self) -> None:
+        """Turn the central heating off."""
+        await self.async_set_hvac_mode(HVACMode.OFF)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Select new HVAC preset mode."""
@@ -203,3 +221,6 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         await self._client.control_device({
             "Room_Temperature_Setpoint_Comfort": new_temperature,
         })
+        self.set_optimistic_value(
+            "Room_Temperature_Setpoint_Comfort", new_temperature
+        )

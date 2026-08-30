@@ -88,6 +88,18 @@ class VaillantEntity(Entity):
     def update_from_latest_data(self, data: dict[str, Any]) -> None:
         """Update the entity from the latest data."""
 
+    @callback
+    def set_optimistic_value(self, attr: str, value: Any) -> None:
+        """Apply a value locally without waiting for the device to echo it.
+
+        The cloud can take several seconds to report a change back over the
+        websocket; until then the UI would snap back to the old value.
+        """
+        self._client.device_attrs[attr] = value
+        self.update_from_latest_data({attr: value})
+        if self.hass is not None:
+            self.async_write_ha_state()
+
     async def send_command(self, attr: str, value: Any) -> None:
         """Send operations to cloud."""
         await self._client.control_device({
