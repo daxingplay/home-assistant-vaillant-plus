@@ -205,3 +205,11 @@ async def test_client_close_with_sleep(
 # #     len(caplog.record_tuples) == 1
 # #     and "Error parsing information from" in caplog.record_tuples[0][2]
 # # )
+
+
+async def test_client_reuses_the_stored_token(hass, device_api_client):
+    """The stored token must be applied before the first request, see issue #29."""
+    device_api_client._api_client.update_token.assert_called_once()
+    token = device_api_client._api_client.update_token.call_args[0][0]
+    assert token.access_token == device_api_client._token.access_token
+    device_api_client._api_client.login.assert_not_called()

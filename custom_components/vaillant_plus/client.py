@@ -38,6 +38,11 @@ class VaillantClient:
         self._token = token
 
         self._api_client = VaillantApiClient(session=get_aiohttp_session(self._hass))
+        # Reuse the token stored in the config entry. Without this every start
+        # would send unauthenticated requests, get rejected with
+        # `{"code":9006,"msg":"token 过期"}` and re-login, which invalidates the
+        # session of the Vaillant mobile app.
+        self._api_client.update_token(token)
 
         self._websocket_client: VaillantWebsocketClient | None = None
 
@@ -100,6 +105,7 @@ class VaillantClient:
         await self._websocket_client.connect()
 
     async def _get_token(self) -> None:
+        """Log in again and publish the new token."""
         _LOGGER.info("Token expired, retrieve new token...")
         token_new = await self._api_client.login(self._token.username, self._token.password)
         self._token = token_new
@@ -117,7 +123,18 @@ class VaillantClient:
                 await self._connect()
                 retry_delay = 5  # Reset on success
             except InvalidAuthError:
-                await self._get_token()
+                try:
+                    await self._get_token()
+                    retry_delay = 5
+                except Exception as error:  # pylint: disable=broad-except
+                    # Do not hammer the login endpoint when the credentials
+                    # themselves are rejected.
+                    retry_delay = min(retry_delay * 2, max_delay)
+                    _LOGGER.error(
+                        "Failed to refresh the access token: %s, retrying in %ds",
+                        error,
+                        retry_delay,
+                    )
             except ShouldUpdateConfigEntry:
                 _LOGGER.error("Device not found, config entry needs update")
                 break
