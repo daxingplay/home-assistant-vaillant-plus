@@ -1,6 +1,9 @@
 # Changelog
 
 <!--next-version-placeholder-->
+## v1.2.8 (2026-08-30)
+* [#27](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/27) [#28](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/28) Require `vaillant-plus-cn-api` 2.0.1, which no longer crashes on accounts containing a device it cannot describe. Previously a single such device (for example an eloCIRC 循环水魔方, returned by the cloud with `"modelInfo": null`) raised `TypeError: 'NoneType' object is not subscriptable` while reading the device list, so the integration could not be set up at all — including for the supported devices in the same account.
+
 ## v1.2.7 (2026-08-30)
 * [#34](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/34) Support `water_heater.turn_on` / `water_heater.turn_off`, so device actions and scripts can switch domestic hot water on and off. The DHW temperature limits now fall back to 35–65 °C when the gateway does not report them.
 * [#29](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/29) [#35](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/35) Reuse the access token stored in the config entry. Previously every start sent unauthenticated requests, was rejected with `token 过期` and logged in again, which invalidated the session of the Vaillant mobile app. Re-login failures now back off instead of retrying in a tight loop.
