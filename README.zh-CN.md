@@ -12,48 +12,48 @@
 
 [![Community Forum][forum-shield]][forum]
 
-English | [简体中文](README.zh-CN.md)
+[English](README.md) | 简体中文
 
-Home Assistant custom component for controlling vSmart in Vaillant+ cn app.
+Home Assistant 自定义集成，用于控制威能 Vaillant+ App（威管家）中的 vSMART 设备。
 
-## Requirements
+## 系统要求
 
-Home Assistant 2024.2 or later.
+Home Assistant 2024.2 或更高版本。
 
-## Screenshot
+## 截图
 
 ![screenshot](docs/images/screenshot-all.jpg)
 
-## Installation
+## 安装
 
-### Pre-requirements
-- You need connect your Vaillant vSmart device through Vaillant+([iOS](https://apps.apple.com/cn/app/%E5%A8%81%E7%AE%A1%E5%AE%B6/id1465568192) | Android ) App.
+### 前置条件
+- 需要先通过威能 Vaillant+（[iOS](https://apps.apple.com/cn/app/%E5%A8%81%E7%AE%A1%E5%AE%B6/id1465568192) | Android）App 完成 vSMART 设备的配网。
 
-### Installation Methods
+### 安装方式
 #### HACS
-Click the following link to add to your Home Assistant.
+点击下面的链接添加到你的 Home Assistant。
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=daxingplay&repository=home-assistant-vaillant-plus&category=integration)
 
-Or you can search for `Vaillant Plus` in your HACS.
+也可以在 HACS 中搜索 `Vaillant Plus`。
 
-#### Manual
-Copy `custom_components/vaillant_plus` into your Home Assistant `config` directory.
+#### 手动安装
+把 `custom_components/vaillant_plus` 复制到 Home Assistant 的 `config` 目录下。
 
-### Post installation steps
-- Restart HA
-- Search for this integration in `Settings -> Devices & Services`
-- Click `Add integration` and search for `Vaillant Plus`
-- Click `Configure` in Vaillant Plus integration to start config flow
-- Enter your username and password for the Vaillant+ App
-- If login successfully, select the proper Vaillant vSmart device from the list
-- All done
+### 安装后的步骤
+- 重启 Home Assistant
+- 在 `设置 -> 设备与服务` 中找到本集成
+- 点击 `添加集成`，搜索 `Vaillant Plus`
+- 在 Vaillant Plus 集成中点击 `配置`，开始配置流程
+- 输入威能 Vaillant+ App 的用户名和密码
+- 登录成功后，从列表中选择对应的 vSMART 设备
+- 完成
 
-## Troubleshooting
+## 常见问题
 
 ### `The unit of sensor.… (°C) cannot be converted to the unit of previously compiled statistics (None)`
 
-Seen once per temperature sensor after upgrading from v1.2.4 or earlier, for example:
+从 v1.2.4 或更早版本升级后，每个温度传感器会出现一次该报错，例如：
 
 ```
 The unit of sensor.flow_temperature (°C) cannot be converted to the unit of
@@ -61,25 +61,23 @@ previously compiled statistics (None). Generation of long term statistics will
 be suppressed unless the unit changes back to None or a compatible unit.
 ```
 
-Before v1.2.5 the temperature sensors declared a temperature device class but no
-unit, so Home Assistant recorded their long term statistics with no unit at all.
-v1.2.5 added the missing `°C`, and the recorder will not mix the two, so it stops
-generating long term statistics for those sensors until you tell it what the old
-data was in. Current values and short term history are not affected.
+v1.2.5 之前，温度传感器只声明了温度设备类别，没有声明单位，因此 Home Assistant
+记录的长期统计数据是没有单位的。v1.2.5 补上了缺失的 `°C`，而记录器不会把这两种
+数据混在一起，所以在你告诉它旧数据的单位之前，会停止为这些传感器生成长期统计
+数据。当前数值和短期历史记录不受影响。
 
-Fix it once in Home Assistant, no reinstall needed:
+在 Home Assistant 中修复一次即可，无需重新安装：
 
-1. Go to [Developer tools -> Statistics](https://my.home-assistant.io/redirect/developer_statistics/), or follow the link in the log message.
-2. Find each of the listed `sensor.*` entities and click the issue next to it.
-3. Choose the option that updates the unit of the historical statistics to `°C`. The old readings were already Celsius, only unlabelled, so this keeps your history. Deleting the statistics also clears the warning, at the cost of the old data.
+1. 打开 [开发者工具 -> 统计数据](https://my.home-assistant.io/redirect/developer_statistics/)，也可以直接点击日志中的链接。
+2. 找到日志里列出的每个 `sensor.*` 实体，点击旁边的问题提示。
+3. 选择把历史统计数据的单位更新为 `°C` 的选项。原有读数本来就是摄氏度，只是没有标注单位，所以历史数据会被保留。删除统计数据同样可以消除该报错，但会丢失旧数据。
 
-Long term statistics resume on the next recorder cycle and the warning does not
-come back.
+修复后，长期统计数据会在下一个记录周期恢复生成，该报错也不会再出现。
 
-## Contributions are welcome!
-If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
+## 欢迎贡献代码！
+如果你想为本项目做贡献，请先阅读[贡献指南](CONTRIBUTING.md)。
 
-Component built with integration_blueprint.
+本集成基于 integration_blueprint 构建。
 
 ***
 
