@@ -12,14 +12,14 @@ from homeassistant.components.climate.const import (
 )
 
 from custom_components.vaillant_plus.climate import (
-    VaillantFlowClimate,
-    VaillantRoomClimate,
+    VaillantGatewayClimate,
+    VaillantVSmartClimate,
 )
 
 
 async def test_climate_actions(hass, device_api_client):
     """Test binary sensor."""
-    climate = VaillantRoomClimate(
+    climate = VaillantVSmartClimate(
         device_api_client,
     )
 
@@ -70,7 +70,7 @@ async def test_climate_turn_on_off(hass, device_api_client):
         "Room_Temperature": 20.5,
         "Room_Temperature_Setpoint_Comfort": 22,
     }
-    climate = VaillantRoomClimate(device_api_client)
+    climate = VaillantVSmartClimate(device_api_client)
 
     with patch(
         "custom_components.vaillant_plus.VaillantClient.control_device"
@@ -97,7 +97,7 @@ async def test_climate_target_temperature_is_applied_optimistically(
         "Heating_Enable": 1,
         "Room_Temperature_Setpoint_Comfort": 22,
     }
-    climate = VaillantRoomClimate(device_api_client)
+    climate = VaillantVSmartClimate(device_api_client)
 
     with patch("custom_components.vaillant_plus.VaillantClient.control_device"):
         await climate.async_set_temperature(temperature=24)
@@ -138,7 +138,7 @@ async def test_climate_failed_command_raises_and_does_not_change_state(
         "Heating_Enable": 1,
         "Room_Temperature_Setpoint_Comfort": 22,
     }
-    climate = VaillantRoomClimate(device_api_client)
+    climate = VaillantVSmartClimate(device_api_client)
 
     with patch(
         "custom_components.vaillant_plus.VaillantClient.control_device",
@@ -205,7 +205,7 @@ GATEWAY_UNPAIRED_ATTRS = {
 async def test_gateway_controls_the_flow_temperature(hass, device_api_client):
     """A gateway targets the central heating flow setpoint."""
     device_api_client._device_attrs = dict(GATEWAY_ATTRS)
-    climate = VaillantFlowClimate(device_api_client)
+    climate = VaillantGatewayClimate(device_api_client)
 
     assert climate.current_temperature == 21
     assert climate.target_temperature == 45
@@ -228,8 +228,8 @@ async def test_gateway_advertises_no_comfort_preset(hass, device_api_client):
     None for the mode.
     """
     device_api_client._device_attrs = dict(GATEWAY_ATTRS)
-    gateway = VaillantFlowClimate(device_api_client)
-    vsmart = VaillantRoomClimate(device_api_client)
+    gateway = VaillantGatewayClimate(device_api_client)
+    vsmart = VaillantVSmartClimate(device_api_client)
 
     assert not gateway.supported_features & ClimateEntityFeature.PRESET_MODE
     assert vsmart.supported_features & ClimateEntityFeature.PRESET_MODE
@@ -239,7 +239,7 @@ async def test_gateway_advertises_no_comfort_preset(hass, device_api_client):
 async def test_gateway_ignores_no_data_sentinels(hass, device_api_client):
     """A gateway with no boiler must report nothing, not 127.5 / 255."""
     device_api_client._device_attrs = dict(GATEWAY_UNPAIRED_ATTRS)
-    climate = VaillantFlowClimate(device_api_client)
+    climate = VaillantGatewayClimate(device_api_client)
 
     assert climate.current_temperature is None
     assert climate.target_temperature is None
@@ -250,7 +250,7 @@ async def test_gateway_ignores_no_data_sentinels(hass, device_api_client):
 async def test_gateway_sends_cruising_like_a_vsmart(hass, device_api_client):
     """Both families report Mode_Setting_CH, so both are sent it."""
     device_api_client._device_attrs = dict(GATEWAY_ATTRS)
-    climate = VaillantFlowClimate(device_api_client)
+    climate = VaillantGatewayClimate(device_api_client)
 
     with patch(
         "custom_components.vaillant_plus.VaillantClient.control_device"
@@ -299,4 +299,4 @@ async def test_setup_creates_the_entity_for_the_resolved_family(
     await hass.async_block_till_done()
 
     assert len(added) == 1
-    assert isinstance(added[0], VaillantFlowClimate)
+    assert isinstance(added[0], VaillantGatewayClimate)

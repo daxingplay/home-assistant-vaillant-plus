@@ -222,8 +222,8 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         await self.send_commands({self._setpoint_attr: new_temperature})
 
 
-class VaillantRoomClimate(VaillantClimate):
-    """A vSMART thermostat, which controls the temperature of a room."""
+class VaillantVSmartClimate(VaillantClimate):
+    """The vSMART thermostat, which controls the temperature of a room."""
 
     _setpoint_attr = "Room_Temperature_Setpoint_Comfort"
     _temperature_attrs = ("Room_Temperature",)
@@ -254,8 +254,8 @@ class VaillantRoomClimate(VaillantClimate):
         return
 
 
-class VaillantFlowClimate(VaillantClimate):
-    """A gateway, which sits at the boiler and controls the flow temperature.
+class VaillantGatewayClimate(VaillantClimate):
+    """The familyCONNECT gateway, which controls the boiler flow temperature.
 
     It has no room setpoint, so it advertises no comfort preset: Home
     Assistant rejects a climate entity that offers PRESET_MODE and then
@@ -281,6 +281,6 @@ class VaillantFlowClimate(VaillantClimate):
 
 
 _ENTITY_CLASSES = {
-    VaillantDeviceType.VSMART: VaillantRoomClimate,
-    VaillantDeviceType.GATEWAY: VaillantFlowClimate,
+    VaillantDeviceType.VSMART: VaillantVSmartClimate,
+    VaillantDeviceType.GATEWAY: VaillantGatewayClimate,
 }
