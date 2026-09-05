@@ -2,6 +2,9 @@
 
 <!--next-version-placeholder-->
 ## Unreleased
+* **Accounts with more than one device no longer fight over the login session.** The cloud keeps a single session per account, and each bound device gets its own config entry, so two entries would take turns logging in and invalidating each other's token — showing up as entries repeatedly going unavailable and reconnecting, and as the Vaillant app being logged out. A token obtained by one entry is now adopted by the others instead of being answered with another login.
+
+## Unreleased
 * Diagnostics now report the fields that identify a device's product family (`platform`, `product_id`, `sub_product_key`), so a report about an unsupported device can be acted on without asking for a second round of information. Per-unit identifiers such as the serial number stay out of the dump, as before.
 
 ## v1.4.0 (2026-08-30)
