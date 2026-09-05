@@ -141,3 +141,27 @@ def test_non_temperature_sensors_keep_sentinel_looking_values():
     entity.update_from_latest_data({"Gateway_Fault_List_1": 255})
 
     assert entity.native_value == 255
+
+
+def test_indoor_temperature_is_only_created_for_devices_that_report_it():
+    """`indoor_temperature` is a gateway attribute; a vSMART never sends it.
+
+    Sensors are created per attribute *present in the payload*, so adding a
+    description cannot create an entity on a device that does not report the
+    key. A vSMART reports `Room_Temperature` instead, so the two families get
+    one room reading each rather than one empty entity apiece.
+    """
+    from custom_components.vaillant_plus.sensor import SENSOR_DESCRIPTIONS
+
+    # Captured payloads, trimmed to the room-temperature attributes.
+    vsmart_attrs = {"Room_Temperature": 26, "Outdoor_Temperature": 26}
+    gateway_attrs = {"indoor_temperature": 255, "ebus_status": 0}
+
+    def created_for(attrs):
+        return {d.key for d in SENSOR_DESCRIPTIONS if d.key in attrs}
+
+    assert "indoor_temperature" not in created_for(vsmart_attrs)
+    assert created_for(vsmart_attrs) == {"Room_Temperature", "Outdoor_Temperature"}
+
+    assert "Room_Temperature" not in created_for(gateway_attrs)
+    assert "indoor_temperature" in created_for(gateway_attrs)
