@@ -163,6 +163,9 @@
             "heating_system_setting": {
                 "name": "采暖系统设置"
             },
+            "indoor_temperature": {
+                "name": "室内温度"
+            },
             "lower_limitation_of_ch_setpoint": {
                 "name": "暖气最小设置温度"
             },
@@ -177,6 +180,9 @@
             },
             "mode_setting_ch": {
                 "name": "采暖模式设置"
+            },
+            "mode_setting_dhw": {
+                "name": "生活热水模式设置"
             },
             "outdoor_temperature": {
                 "name": "室外温度"
