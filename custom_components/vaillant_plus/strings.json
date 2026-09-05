@@ -130,6 +130,9 @@
       "heating_system_setting": {
         "name": "Heating system setting"
       },
+      "indoor_temperature": {
+        "name": "Indoor temperature"
+      },
       "lower_limitation_of_ch_setpoint": {
         "name": "Lower limitation of central heating setpoint"
       },
@@ -144,6 +147,9 @@
       },
       "mode_setting_ch": {
         "name": "Central heating mode setting"
+      },
+      "mode_setting_dhw": {
+        "name": "Domestic hot water mode setting"
       },
       "outdoor_temperature": {
         "name": "Outdoor temperature"

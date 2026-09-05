@@ -1,6 +1,12 @@
 # Changelog
 
 <!--next-version-placeholder-->
+## v1.5.0 (2026-09-05)
+* [#30](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/30) **Support central heating on familyCONNECT gateway devices.** A gateway sits at the boiler and controls the central heating *flow* temperature rather than a room temperature, so it now gets its own climate entity targeting `Flow_Temperature_Setpoint` over a 30–75 °C range. This is why a gateway previously showed hot water control only. The vSMART thermostat is unchanged. Thanks to [@elwinchen1986](https://github.com/elwinchen1986) whose fork worked out the initial gateway attribute mapping.
+* **Temperatures a device reports as "no reading" are no longer shown as real measurements.** Neither device omits an attribute it has no value for — it sends the raw eBUS sentinel instead — so a gateway with no boiler bound reported every temperature as 127.5 °C and its room temperature as 255 °C, and a vSMART with no tank reported a 127.5 °C tank. Those values were rendered as genuine readings and written into long term statistics. Affected sensors now show as unavailable instead.
+* New sensors: indoor temperature, and the domestic hot water mode setting.
+* Requires vaillant-plus-cn-api 2.1.0, which exposes the fields identifying which product family a device belongs to.
+
 ## v1.4.0 (2026-08-30)
 * **This release requires Home Assistant 2024.2 or later.** Older installations keep working on v1.3.0 and HACS will not offer them the update. Dropping them removes the compatibility shims the integration carried for releases from 2022.11 on, and is what allows entity names to be translated at all.
 * Entity names are now translatable. Every sensor and binary sensor carries a `translation_key`, and Chinese names are provided for all of them, so the entities show as 供水温度 / 水箱温度 / 暖气开启状态 rather than English. Languages without a translation keep the English names. Chinese wording follows [@elwinchen1986](https://github.com/elwinchen1986)'s fork where it had a name for an attribute.

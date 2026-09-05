@@ -24,6 +24,7 @@ from .client import VaillantClient
 from .const import CONF_DID, DOMAIN, API_CLIENT
 from .discovery import async_register_discovery
 from .entity import VaillantEntity
+from .utils import valid_temperature
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,6 +50,14 @@ SENSOR_DESCRIPTIONS = (
         key="Outdoor_Temperature",
         name="Outdoor temperature",
         translation_key="outdoor_temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="indoor_temperature",
+        name="Indoor temperature",
+        translation_key="indoor_temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
@@ -253,6 +262,12 @@ SENSOR_DESCRIPTIONS = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
+        key="Mode_Setting_DHW",
+        name="Domestic hot water mode setting",
+        translation_key="mode_setting_dhw",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
         key="Heating_System_Setting",
         name="Heating system setting",
         translation_key="heating_system_setting",
@@ -439,5 +454,7 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
             return
 
         value = data.get(self.entity_description.key)
+        if self.entity_description.device_class == SensorDeviceClass.TEMPERATURE:
+            value = valid_temperature(value)
         self._attr_native_value = value
         self._attr_available = value is not None
