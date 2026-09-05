@@ -1,6 +1,9 @@
 # Changelog
 
 <!--next-version-placeholder-->
+## Unreleased
+* Diagnostics now report the fields that identify a device's product family (`platform`, `product_id`, `sub_product_key`), so a report about an unsupported device can be acted on without asking for a second round of information. Per-unit identifiers such as the serial number stay out of the dump, as before.
+
 ## v1.4.0 (2026-08-30)
 * **This release requires Home Assistant 2024.2 or later.** Older installations keep working on v1.3.0 and HACS will not offer them the update. Dropping them removes the compatibility shims the integration carried for releases from 2022.11 on, and is what allows entity names to be translated at all.
 * Entity names are now translatable. Every sensor and binary sensor carries a `translation_key`, and Chinese names are provided for all of them, so the entities show as 供水温度 / 水箱温度 / 暖气开启状态 rather than English. Languages without a translation keep the English names. Chinese wording follows [@elwinchen1986](https://github.com/elwinchen1986)'s fork where it had a name for an attribute.
