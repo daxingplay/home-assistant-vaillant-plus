@@ -13,7 +13,7 @@ jobs:
     runs-on: "ubuntu-latest"
     name: Validate
     steps:
-        - uses: "actions/checkout@v4"
+        - uses: "actions/checkout@v7"
 
         - name: HACS validation
           uses: "hacs/action@main"
@@ -27,7 +27,7 @@ jobs:
     runs-on: "ubuntu-latest"
     name: Check style formatting
     steps:
-        - uses: "actions/checkout@v4"
+        - uses: "actions/checkout@v7"
         - uses: actions/setup-python@v5
           with:
             python-version: 3.9
@@ -79,7 +79,7 @@ jobs:
             pytest-homeassistant-custom-component-version: 0.13.356
     steps:
       - name: Check out code from GitHub
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v7"
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
