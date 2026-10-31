@@ -10,6 +10,9 @@
 * Requires vaillant-plus-cn-api 2.1.0, which exposes the fields identifying which product family a device belongs to.
 * The gateway climate entity now shows the measured flow temperature (`Flow_temperature`) as its current temperature. It used the room reading, so a 21 °C room against a 45 °C flow setpoint made the heating look like it was always running. With no measured flow temperature it shows none; the room reading stays available as its own sensor.
 * Turning a vSMART's heating off now shows straight away. The mode was read from `Enabled_Heating` before `Heating_Enable`, so the optimistic update of the attribute actually written was hidden until the cloud echoed the change.
+* **Chinese entity names now show on Simplified Chinese installations.** Home Assistant looks up `translations/zh-Hans.json` for them and falls back to English only, so the Chinese names in `zh.json` were never used. Entity ids do not change.
+* **Diagnostics no longer leak the home's Wi-Fi name, LAN address and serial numbers.** A gateway reports them as device attributes, several hex-encoded so they did not look sensitive; `WiFi_SSID`, `WiFi_IP`, `gateway_sn`, `device_sn`, `device_serial_number`, the traceability numbers and `location_group` are now redacted.
+* The gateway climate entity takes its setpoint range from the boiler's reported central heating limits (30–60 °C on a turboTEC plus) instead of a fixed 30–75 °C, which allowed setpoints the boiler does not accept. The fixed range remains the fallback when no limits are reported.
 * Domestic hot water limits sent as the "no reading" sentinel (127.5 °C) no longer become the water heater's range; the 35–65 °C defaults apply instead.
 
 ## v1.4.0 (2026-08-30)

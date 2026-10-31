@@ -23,6 +23,7 @@ TRANSLATION_FILES = (
     COMPONENT / "strings.json",
     COMPONENT / "translations/en.json",
     COMPONENT / "translations/zh.json",
+    COMPONENT / "translations/zh-Hans.json",
 )
 
 
@@ -115,7 +116,7 @@ async def test_home_assistant_resolves_every_entity_name(hass):
 
     await async_setup_component(hass, DOMAIN, {})
 
-    for language in ("en", "zh"):
+    for language in ("en", "zh", "zh-Hans"):
         translations = await async_get_translations(
             hass, language, "entity", {DOMAIN}
         )
@@ -128,3 +129,24 @@ async def test_home_assistant_resolves_every_entity_name(hass):
                 )
                 assert translations.get(key), f"{language}: {key} did not resolve"
 
+
+
+async def test_simplified_chinese_installations_get_chinese_names(hass):
+    """Home Assistant asks for `zh-Hans`, never `zh`, on a Simplified Chinese setup.
+
+    It loads `translations/<language>.json` and falls back to English only, so
+    without a `zh-Hans.json` every entity showed its English name even though
+    `zh.json` carries the Chinese ones.
+    """
+    from homeassistant.helpers.translation import async_get_translations
+    from homeassistant.setup import async_setup_component
+
+    from custom_components.vaillant_plus.const import DOMAIN
+
+    await async_setup_component(hass, DOMAIN, {})
+
+    english = await async_get_translations(hass, "en", "entity", {DOMAIN})
+    chinese = await async_get_translations(hass, "zh-Hans", "entity", {DOMAIN})
+    key = f"component.{DOMAIN}.entity.sensor.flow_temperature.name"
+
+    assert chinese[key] != english[key]

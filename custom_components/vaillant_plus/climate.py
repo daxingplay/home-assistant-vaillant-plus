@@ -44,10 +44,10 @@ SUPPORTED_PRESET_MODES = [PRESET_COMFORT]
 # `Enabled_Heating` until the cloud echoes the change.
 HEATING_ENABLE_ATTRS = ("Heating_Enable", "Enabled_Heating")
 
-# The central heating range a gateway is given. It reports no
-# `Lower/Upper_Limitation_of_CH_Setpoint` of its own - those are vSMART
-# fields - so this is not a fallback but the only bound it ever gets. The
-# values match the range the Vaillant app offers.
+# The central heating range a gateway falls back to. A gateway with a boiler
+# bound reports the boiler's own `Lower/Upper_Limitation_of_CH_Setpoint`
+# (30-60 °C on a turboTEC plus), which takes precedence; one without a boiler
+# reports none, or the "no reading" sentinel.
 FLOW_MIN_TEMPERATURE = 30.0
 FLOW_MAX_TEMPERATURE = 75.0
 
@@ -278,13 +278,15 @@ class VaillantGatewayClimate(VaillantClimate):
     def min_temp(self) -> float:
         """Return the minimum flow temperature that can be set."""
 
-        return FLOW_MIN_TEMPERATURE
+        value = valid_temperature(self.get_device_attr("Lower_Limitation_of_CH_Setpoint"))
+        return FLOW_MIN_TEMPERATURE if value is None else value
 
     @property
     def max_temp(self) -> float:
         """Return the maximum flow temperature that can be set."""
 
-        return FLOW_MAX_TEMPERATURE
+        value = valid_temperature(self.get_device_attr("Upper_Limitation_of_CH_Setpoint"))
+        return FLOW_MAX_TEMPERATURE if value is None else value
 
 
 _ENTITY_CLASSES = {
