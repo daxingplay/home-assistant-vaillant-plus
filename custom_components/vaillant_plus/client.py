@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any
+from typing import Any, Callable
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.helpers.dispatcher import (
+    async_dispatcher_connect,
+    async_dispatcher_send,
+)
 from vaillant_plus_cn_api import (
     EVT_DEVICE_ATTR_UPDATE,
     Device,
@@ -49,6 +52,30 @@ class VaillantClient:
         self._sleep_task: asyncio.Task | None = None
 
         self._state = "INITED"
+
+        self._unsub_token_update: Callable[[], None] | None = None
+
+        # One account can have several config entries - one per bound device -
+        # and the cloud keeps a single session per account, so a login from one
+        # of them invalidates the token every other one is holding. Each entry
+        # publishes the token it obtains; listen for those so a refresh
+        # anywhere is adopted here instead of answered with a login of our
+        # own, which would in turn invalidate theirs.
+        self._unsub_token_update = async_dispatcher_connect(
+            self._hass,
+            EVT_TOKEN_UPDATED.format(token.username),
+            self._handle_token_update,
+        )
+
+    @callback
+    def _handle_token_update(self, token_new: Token) -> None:
+        """Adopt a token another config entry obtained for this account."""
+        if Token.equals(self._token, token_new):
+            return
+
+        _LOGGER.debug("Adopting the token refreshed by another config entry")
+        self._token = token_new
+        self._api_client.update_token(token_new)
 
     @property
     def device(self) -> Device:
@@ -104,8 +131,22 @@ class VaillantClient:
 
         await self._websocket_client.connect()
 
-    async def _get_token(self) -> None:
-        """Log in again and publish the new token."""
+    async def _get_token(self, failed_token: Token | None = None) -> None:
+        """Get a working token, by login only if nobody else already did.
+
+        `failed_token` is the token the rejected request used. If the current
+        token is no longer that one, another config entry for this account
+        refreshed it while this request was in flight, and logging in again
+        would invalidate the token it just published - each entry knocking the
+        other offline in turn. Adopt theirs instead.
+        """
+        if failed_token is not None and not Token.equals(self._token, failed_token):
+            _LOGGER.debug(
+                "Token was refreshed by another config entry, retrying with it"
+            )
+            self._api_client.update_token(self._token)
+            return
+
         _LOGGER.info("Token expired, retrieve new token...")
         token_new = await self._api_client.login(self._token.username, self._token.password)
         self._token = token_new
@@ -119,12 +160,15 @@ class VaillantClient:
         retry_delay = 5
         max_delay = 300  # 5 minutes max
         while self._state != "CLOSED":
+            # Remember which token this attempt used, so a rejection can tell
+            # "the token is stale" from "another entry already replaced it".
+            token_in_use = self._token
             try:
                 await self._connect()
                 retry_delay = 5  # Reset on success
             except InvalidAuthError:
                 try:
-                    await self._get_token()
+                    await self._get_token(token_in_use)
                     retry_delay = 5
                 except Exception as error:  # pylint: disable=broad-except
                     # Do not hammer the login endpoint when the credentials
@@ -166,15 +210,20 @@ class VaillantClient:
 
         self._state = "CLOSED"
 
+        if self._unsub_token_update is not None:
+            self._unsub_token_update()
+            self._unsub_token_update = None
+
     async def control_device(self, attrs: dict[str, Any]) -> bool:
         """Send command to control device."""
         retry_times = 0
         while retry_times < 3:
+            token_in_use = self._token
             try:
                 await self._api_client.control_device(self._device_id, attrs)
                 return True
             except InvalidAuthError:
-                await self._get_token()
+                await self._get_token(token_in_use)
                 await asyncio.sleep(retry_times * 5)
                 retry_times = retry_times + 1
                 _LOGGER.warning("Control device failed due to invalid token, retry %d time", retry_times)
