@@ -222,6 +222,20 @@
       "weather_compensation": {
         "name": "Weather compensation"
       }
+    },
+    "climate": {
+      "central_heating": {
+        "name": "Central heating"
+      }
+    },
+    "water_heater": {
+      "domestic_hot_water": {
+        "name": "Domestic hot water",
+        "state": {
+          "on": "On",
+          "off": "Off"
+        }
+      }
     }
   }
 }

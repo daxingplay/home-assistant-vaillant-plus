@@ -13,7 +13,7 @@ async def test_water_heater_actions(hass, device_api_client):
 
     assert water_heater.unique_id == "1_water_heater"
     assert water_heater.should_poll is False
-    assert water_heater.name is None
+    assert water_heater.translation_key == "domestic_hot_water"
 
     with patch(
         "custom_components.vaillant_plus.VaillantClient.control_device"

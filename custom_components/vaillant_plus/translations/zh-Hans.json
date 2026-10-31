@@ -222,6 +222,20 @@
       "weather_compensation": {
         "name": "气候补偿状态"
       }
+    },
+    "climate": {
+      "central_heating": {
+        "name": "供暖"
+      }
+    },
+    "water_heater": {
+      "domestic_hot_water": {
+        "name": "生活热水",
+        "state": {
+          "on": "开启",
+          "off": "关闭"
+        }
+      }
     }
   }
 }

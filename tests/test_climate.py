@@ -25,7 +25,7 @@ async def test_climate_actions(hass, device_api_client):
 
     assert climate.unique_id == "1_climate"
     assert climate.should_poll is False
-    assert climate.name is None
+    assert climate.translation_key == "central_heating"
 
     with patch(
         "custom_components.vaillant_plus.VaillantClient.control_device"

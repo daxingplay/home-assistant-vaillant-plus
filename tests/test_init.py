@@ -97,8 +97,9 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_login, by
         assert state_water_heater.attributes.get(ATTR_TEMPERATURE) == 45
         assert state_water_heater.attributes.get("min_temp") == 35.0
         assert state_water_heater.attributes.get("max_temp") == 65.0
-        assert state_water_heater.attributes.get("target_temp_low") == 35.0
-        assert state_water_heater.attributes.get("target_temp_high") == 65.0
+        # The limits are the settable range, not a target range.
+        assert state_water_heater.attributes.get("target_temp_low") is None
+        assert state_water_heater.attributes.get("target_temp_high") is None
 
         state_climate = hass.states.get(climate_id)
         assert state_climate.state == STATE_OFF
@@ -116,8 +117,9 @@ async def test_init_setup_and_unload_entry(hass: HomeAssistant, bypass_login, by
         assert state_water_heater.attributes.get(ATTR_TEMPERATURE) == 60
         assert state_water_heater.attributes.get("min_temp") == 35.0
         assert state_water_heater.attributes.get("max_temp") == 65.0
-        assert state_water_heater.attributes.get("target_temp_low") == 35.0
-        assert state_water_heater.attributes.get("target_temp_high") == 65.0
+        # The limits are the settable range, not a target range.
+        assert state_water_heater.attributes.get("target_temp_low") is None
+        assert state_water_heater.attributes.get("target_temp_high") is None
 
         state_climate = hass.states.get(climate_id)
         assert state_climate.state == "heat"

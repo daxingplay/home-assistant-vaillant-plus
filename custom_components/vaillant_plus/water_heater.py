@@ -86,8 +86,10 @@ async def async_setup_entry(
 class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     """Vaillant vSMART Water Heater."""
 
-    # The main feature of the device: it carries the device name itself.
     _attr_has_entity_name = True
+    # Named so it can be told apart from the climate entity on the same
+    # device; the translation also names its "on" / "off" operations.
+    _attr_translation_key = "domestic_hot_water"
 
     def _dhw_enabled_value(self) -> Any:
         """Return the current DHW enable value from known API variants."""
@@ -106,12 +108,6 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
         """Return a unique ID to use for this entity."""
 
         return f"{self.device.id}_water_heater"
-
-    @property
-    def name(self) -> str | None:
-        """Return the name of the water heater."""
-
-        return None
 
     @property
     def supported_features(self) -> int:
@@ -167,16 +163,6 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
         """Return the targeted dhw temperature. Current_DHW_Setpoint or DHW_setpoint"""
 
         return self._dhw_target_temperature_value()
-
-    @property
-    def target_temperature_high(self) -> float | None:
-        """Return the highbound target temperature we try to reach."""
-        return valid_temperature(self.get_device_attr("Upper_Limitation_of_DHW_Setpoint"))
-
-    @property
-    def target_temperature_low(self) -> float | None:
-        """Return the lowbound target temperature we try to reach."""
-        return valid_temperature(self.get_device_attr("Lower_Limitation_of_DHW_Setpoint"))
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""

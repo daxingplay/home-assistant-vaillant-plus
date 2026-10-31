@@ -95,8 +95,10 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
     exists - is declared by the subclasses rather than decided at runtime.
     """
 
-    # The main feature of the device: it carries the device name itself.
     _attr_has_entity_name = True
+    # A gateway also has a water heater on the same device, so the climate
+    # cannot carry the device name alone: both would show as the same row.
+    _attr_translation_key = "central_heating"
 
     # The attribute this entity writes when the target temperature changes.
     _setpoint_attr: str
@@ -120,12 +122,6 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         """Return a unique ID to use for this entity."""
 
         return f"{self.device.id}_climate"
-
-    @property
-    def name(self) -> str | None:
-        """Return the name of the climate."""
-
-        return None
 
     @property
     def supported_features(self) -> int:
