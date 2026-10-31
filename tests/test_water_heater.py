@@ -73,3 +73,20 @@ async def test_water_heater_temperature_limits_have_fallbacks(hass, device_api_c
     }
     assert water_heater.min_temp == 40
     assert water_heater.max_temp == 60
+
+
+async def test_water_heater_limits_ignore_no_data_sentinels(hass, device_api_client):
+    """DHW limits reported as the eBUS "no data" sentinel fall back to defaults."""
+    from custom_components.vaillant_plus.water_heater import VaillantWaterHeater
+
+    device_api_client._device_attrs = {
+        "DHW_setpoint": 45,
+        "Lower_Limitation_of_DHW_Setpoint": 127.5,
+        "Upper_Limitation_of_DHW_Setpoint": 127.5,
+    }
+    water_heater = VaillantWaterHeater(device_api_client)
+
+    assert water_heater.min_temp == 35.0
+    assert water_heater.max_temp == 65.0
+    assert water_heater.target_temperature_low is None
+    assert water_heater.target_temperature_high is None

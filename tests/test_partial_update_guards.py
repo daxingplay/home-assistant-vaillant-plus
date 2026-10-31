@@ -32,7 +32,7 @@ def test_climate_accepts_current_heating_enable_attribute():
     """Current China gateway payloads may expose Heating_Enable only."""
     from custom_components.vaillant_plus.climate import HEATING_ENABLE_ATTRS
 
-    assert HEATING_ENABLE_ATTRS == ("Enabled_Heating", "Heating_Enable")
+    assert set(HEATING_ENABLE_ATTRS) == {"Enabled_Heating", "Heating_Enable"}
 
 
 def test_client_merges_partial_device_updates():

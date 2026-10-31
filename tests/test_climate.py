@@ -207,12 +207,14 @@ async def test_gateway_controls_the_flow_temperature(hass, device_api_client):
     device_api_client._device_attrs = dict(GATEWAY_ATTRS)
     climate = VaillantGatewayClimate(device_api_client)
 
-    assert climate.current_temperature == 21
+    # No measured flow temperature in this capture, and the room reading is
+    # not a stand-in for it.
+    assert climate.current_temperature is None
     assert climate.target_temperature == 45
     # A gateway reports no CH setpoint limits, so this range is all it gets.
     assert climate.min_temp == 30.0
     assert climate.max_temp == 75.0
-    assert climate.hvac_action == HVACAction.HEATING
+    assert climate.hvac_action == HVACAction.IDLE
 
     with patch(
         "custom_components.vaillant_plus.VaillantClient.control_device"
@@ -300,3 +302,58 @@ async def test_setup_creates_the_entity_for_the_resolved_family(
 
     assert len(added) == 1
     assert isinstance(added[0], VaillantGatewayClimate)
+
+
+async def test_vsmart_turn_off_is_applied_optimistically_with_both_enable_attrs(
+    hass, device_api_client
+):
+    """A real vSMART reports both `Heating_Enable` and `Enabled_Heating`.
+
+    Only `Heating_Enable` is written, so the mode must be read from it first,
+    or turning the heating off snaps back to HEAT until the cloud echoes.
+    """
+    device_api_client._device_attrs = {
+        "Heating_Enable": 1,
+        "Enabled_Heating": 1,
+        "Room_Temperature": 20.5,
+        "Room_Temperature_Setpoint_Comfort": 22,
+    }
+    climate = VaillantVSmartClimate(device_api_client)
+
+    with patch("custom_components.vaillant_plus.VaillantClient.control_device"):
+        await climate.async_turn_off()
+
+    assert climate.hvac_mode == HVACMode.OFF
+    assert climate.hvac_action == HVACAction.OFF
+
+
+async def test_gateway_compares_flow_temperatures_not_the_room(
+    hass, device_api_client
+):
+    """A gateway's setpoint is a flow temperature; the room is not compared to it.
+
+    With a 21 °C room against a 45 °C flow setpoint the heating would always
+    look like it is running.
+    """
+    device_api_client._device_attrs = {
+        **GATEWAY_ATTRS,
+        "Flow_temperature": 47.5,
+    }
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.current_temperature == 47.5
+    assert climate.hvac_action == HVACAction.IDLE
+
+    device_api_client._device_attrs["Flow_temperature"] = 38
+    assert climate.hvac_action == HVACAction.HEATING
+
+
+async def test_gateway_without_measured_flow_claims_no_heating(
+    hass, device_api_client
+):
+    """No measured flow temperature: nothing to compare, so no HEATING claim."""
+    device_api_client._device_attrs = dict(GATEWAY_ATTRS)
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.current_temperature is None
+    assert climate.hvac_action == HVACAction.IDLE

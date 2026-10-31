@@ -38,8 +38,11 @@ BASE_FEATURES = (
 SUPPORTED_HVAC_MODES = [HVACMode.HEAT, HVACMode.OFF]
 SUPPORTED_PRESET_MODES = [PRESET_COMFORT]
 
-# A vSMART reports both; a gateway reports only `Heating_Enable`.
-HEATING_ENABLE_ATTRS = ("Enabled_Heating", "Heating_Enable")
+# A vSMART reports both; a gateway reports only `Heating_Enable`. That is
+# also the one the entity writes, so it is read first: otherwise the
+# optimistic update after turning the heating off is shadowed by
+# `Enabled_Heating` until the cloud echoes the change.
+HEATING_ENABLE_ATTRS = ("Heating_Enable", "Enabled_Heating")
 
 # The central heating range a gateway is given. It reports no
 # `Lower/Upper_Limitation_of_CH_Setpoint` of its own - those are vSMART
@@ -263,9 +266,13 @@ class VaillantGatewayClimate(VaillantClimate):
     """
 
     _setpoint_attr = "Flow_Temperature_Setpoint"
-    # A gateway names its room reading `indoor_temperature`, and reports no
-    # measured `Flow_temperature` to fall back on.
-    _temperature_attrs = ("indoor_temperature",)
+    # The setpoint is a flow temperature, so the current temperature must be
+    # one too: comparing the room (`indoor_temperature`, ~21 °C) against a
+    # 45 °C flow setpoint made the heating always look like it was running.
+    # A gateway with no boiler bound reports no `Flow_temperature`; the
+    # entity then shows no current temperature rather than the wrong one.
+    # The room reading stays available as its own sensor.
+    _temperature_attrs = ("Flow_temperature",)
 
     @property
     def min_temp(self) -> float:
