@@ -7,6 +7,9 @@
 * **Temperatures a device reports as "no reading" are no longer shown as real measurements.** Neither device omits an attribute it has no value for — it sends the raw eBUS sentinel instead — so a gateway with no boiler bound reported every temperature as 127.5 °C and its room temperature as 255 °C, and a vSMART with no tank reported a 127.5 °C tank. Those values were rendered as genuine readings and written into long term statistics. Affected sensors now show as unavailable instead.
 * New sensors: indoor temperature, and the domestic hot water mode setting.
 * Requires vaillant-plus-cn-api 2.1.0, which exposes the fields identifying which product family a device belongs to.
+* The gateway climate entity now shows the measured flow temperature (`Flow_temperature`) as its current temperature. It used the room reading, so a 21 °C room against a 45 °C flow setpoint made the heating look like it was always running. With no measured flow temperature it shows none; the room reading stays available as its own sensor.
+* Turning a vSMART's heating off now shows straight away. The mode was read from `Enabled_Heating` before `Heating_Enable`, so the optimistic update of the attribute actually written was hidden until the cloud echoed the change.
+* Domestic hot water limits sent as the "no reading" sentinel (127.5 °C) no longer become the water heater's range; the 35–65 °C defaults apply instead.
 
 ## v1.4.0 (2026-08-30)
 * **This release requires Home Assistant 2024.2 or later.** Older installations keep working on v1.3.0 and HACS will not offer them the update. Dropping them removes the compatibility shims the integration carried for releases from 2022.11 on, and is what allows entity names to be translated at all.

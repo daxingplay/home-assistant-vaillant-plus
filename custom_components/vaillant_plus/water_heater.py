@@ -171,12 +171,12 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     @property
     def target_temperature_high(self) -> float | None:
         """Return the highbound target temperature we try to reach."""
-        return self.get_device_attr("Upper_Limitation_of_DHW_Setpoint")
+        return valid_temperature(self.get_device_attr("Upper_Limitation_of_DHW_Setpoint"))
 
     @property
     def target_temperature_low(self) -> float | None:
         """Return the lowbound target temperature we try to reach."""
-        return self.get_device_attr("Lower_Limitation_of_DHW_Setpoint")
+        return valid_temperature(self.get_device_attr("Lower_Limitation_of_DHW_Setpoint"))
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -211,7 +211,8 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     @property
     def min_temp(self) -> float:
         """Return the minimum temperature."""
-        value = self.get_device_attr("Lower_Limitation_of_DHW_Setpoint")
+        # A limit sent as the "no reading" sentinel is as good as missing.
+        value = valid_temperature(self.get_device_attr("Lower_Limitation_of_DHW_Setpoint"))
         if value is None:
             return DEFAULT_MIN_TEMPERATURE
         return value
@@ -219,7 +220,7 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     @property
     def max_temp(self) -> float:
         """Return the maximum temperature."""
-        value = self.get_device_attr("Upper_Limitation_of_DHW_Setpoint")
+        value = valid_temperature(self.get_device_attr("Upper_Limitation_of_DHW_Setpoint"))
         if value is None:
             return DEFAULT_MAX_TEMPERATURE
         return value
