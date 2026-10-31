@@ -31,6 +31,9 @@
       "burn_status": {
         "name": "燃烧状态"
       },
+      "burner_modulation": {
+        "name": "燃烧器火力"
+      },
       "ch_power": {
         "name": "采暖功率（原始值）"
       },

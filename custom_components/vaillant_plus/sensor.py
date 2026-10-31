@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    PERCENTAGE,
     EntityCategory,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfPressure,
@@ -288,6 +289,17 @@ SENSOR_DESCRIPTIONS = (
         translation_key="burn_status",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    # How hard the burner is firing, in percent. The gateway keeps reporting
+    # its last value after the flame goes out (1 on a turboTEC plus), so read
+    # it together with burn_status.
+    SensorEntityDescription(
+        key="valueModulation_currentValue",
+        name="Burner modulation",
+        translation_key="burner_modulation",
+        icon="mdi:fire",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
     SensorEntityDescription(
         key="pump_status",
         name="Pump status",
@@ -456,5 +468,9 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
         value = data.get(self.entity_description.key)
         if self.entity_description.device_class == SensorDeviceClass.TEMPERATURE:
             value = valid_temperature(value)
+        elif self.entity_description.native_unit_of_measurement == PERCENTAGE:
+            # Out-of-range values (such as 255) mean "not available"
+            if not isinstance(value, (int, float)) or not 0 <= value <= 100:
+                value = None
         self._attr_native_value = value
         self._attr_available = value is not None

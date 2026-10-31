@@ -31,6 +31,9 @@
       "burn_status": {
         "name": "Burn status"
       },
+      "burner_modulation": {
+        "name": "Burner modulation"
+      },
       "ch_power": {
         "name": "Central heating power raw"
       },
