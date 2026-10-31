@@ -211,7 +211,7 @@ async def test_gateway_controls_the_flow_temperature(hass, device_api_client):
     # not a stand-in for it.
     assert climate.current_temperature is None
     assert climate.target_temperature == 45
-    # A gateway reports no CH setpoint limits, so this range is all it gets.
+    # No CH setpoint limits reported here, so the fixed range applies.
     assert climate.min_temp == 30.0
     assert climate.max_temp == 75.0
     assert climate.hvac_action == HVACAction.IDLE
@@ -357,3 +357,26 @@ async def test_gateway_without_measured_flow_claims_no_heating(
 
     assert climate.current_temperature is None
     assert climate.hvac_action == HVACAction.IDLE
+
+
+async def test_gateway_uses_the_central_heating_limits_it_reports(
+    hass, device_api_client
+):
+    """A gateway bound to a boiler reports its CH setpoint range; use it.
+
+    Captured from a familyCONNECT on a turboTEC plus: 30-60 °C. Offering 75
+    would let Home Assistant send a setpoint the boiler does not accept.
+    """
+    device_api_client._device_attrs = {
+        **GATEWAY_ATTRS,
+        "Lower_Limitation_of_CH_Setpoint": 30,
+        "Upper_Limitation_of_CH_Setpoint": 60,
+    }
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.min_temp == 30
+    assert climate.max_temp == 60
+
+    # Sentinels or no limits at all: the fixed range applies.
+    device_api_client._device_attrs["Upper_Limitation_of_CH_Setpoint"] = 127.5
+    assert climate.max_temp == 75.0
