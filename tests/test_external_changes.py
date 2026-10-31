@@ -138,3 +138,33 @@ async def test_app_change_after_an_ha_change_still_wins(hass: HomeAssistant):
     assert hass.states.get(ids["climate"]).attributes[ATTR_TEMPERATURE] == 50
     assert hass.states.get(ids["setpoint"]).state == "50"
     assert hass.states.get(ids["water_heater"]).state == STATE_ON
+
+
+async def test_gateway_entities_show_their_own_names_and_the_dhw_target(
+    hass: HomeAssistant,
+):
+    """The climate and water heater must be told apart, and show what they target.
+
+    Both used the device name alone, so a device page listed two identical
+    rows; the water heater reported its setpoint limits as a target range, so
+    the UI showed "35-65 °C" instead of the 45 °C actually set; and its "on"
+    operation had no translation.
+    """
+    from homeassistant.helpers.translation import async_get_translations
+
+    hass.config.language = "zh-Hans"
+    ids, _ = await _set_up_gateway(hass)
+
+    climate = hass.states.get(ids["climate"])
+    water_heater = hass.states.get(ids["water_heater"])
+    assert climate.attributes["friendly_name"] == "智能网关 供暖"
+    assert water_heater.attributes["friendly_name"] == "智能网关 生活热水"
+
+    assert water_heater.attributes[ATTR_TEMPERATURE] == 45
+    assert water_heater.attributes.get("target_temp_low") is None
+    assert water_heater.attributes.get("target_temp_high") is None
+
+    states = await async_get_translations(hass, "zh-Hans", "entity", {DOMAIN})
+    key = f"component.{DOMAIN}.entity.water_heater.domestic_hot_water.state"
+    assert states[f"{key}.on"] == "开启"
+    assert states[f"{key}.off"] == "关闭"
