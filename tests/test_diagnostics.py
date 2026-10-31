@@ -107,3 +107,44 @@ async def test_diagnostics_tolerate_an_older_api_library(hass, device_api_client
 
     assert result["client"]["device"]["platform"] is None
     assert result["client"]["device"]["sub_product_key"] is None
+
+
+async def test_diagnostics_redact_what_a_real_gateway_reports(hass, device_api_client):
+    """A gateway reports its serials, Wi-Fi network and location as attributes.
+
+    Several are hex-encoded ASCII (`WiFi_SSID`, `WiFi_IP`, `gateway_sn`), so
+    they do not look sensitive at a glance - but they decode to the home's
+    network name, the LAN address and per-unit serial numbers, which must not
+    end up in a dump pasted into a public issue.
+    """
+    entry = MockConfigEntry(
+        domain=DOMAIN, data=MOCK_CONFIG_ENTRY_DATA, entry_id=MOCK_DID
+    )
+    entry.add_to_hass(hass)
+    hass.data.setdefault(DOMAIN, {API_CLIENT: {}, DISPATCHERS: {}})
+    hass.data[DOMAIN][API_CLIENT][entry.entry_id] = device_api_client
+
+    identifying = {
+        "WiFi_SSID": "4d79486f6d65",
+        "WiFi_IP": "3139322e3136382e312e3130",
+        "gateway_sn": "3132333435363738",
+        "device_sn": "3837363534333231",
+        "device_serial_number": "00000000000000000000000000X0",
+        "traceability_number": "31313131313131",
+        "Gateway_traceability_number": "32323232323232",
+        "location_group": "100000000_1",
+    }
+    device_api_client._device_attrs = {
+        **identifying,
+        "Flow_Temperature_Setpoint": 41.5,
+        "ebus_status": 1,
+    }
+
+    attrs = (await async_get_config_entry_diagnostics(hass, entry))["client"][
+        "device_attrs"
+    ]
+
+    for key in identifying:
+        assert attrs[key] == REDACTED, key
+    assert attrs["Flow_Temperature_Setpoint"] == 41.5
+    assert attrs["ebus_status"] == 1

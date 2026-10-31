@@ -27,6 +27,18 @@ TO_REDACT = {
     "token",
     "uid",
     "username",
+    # Reported by a familyCONNECT gateway as device attributes. Several are
+    # hex-encoded ASCII, so they do not look sensitive, but they decode to the
+    # home's Wi-Fi name, its LAN address and per-unit serial numbers.
+    # `location_group` is the weather location code of the home.
+    "WiFi_SSID",
+    "WiFi_IP",
+    "gateway_sn",
+    "device_sn",
+    "device_serial_number",
+    "traceability_number",
+    "Gateway_traceability_number",
+    "location_group",
 }
 
 
