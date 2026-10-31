@@ -143,6 +143,34 @@ def test_non_temperature_sensors_keep_sentinel_looking_values():
     assert entity.native_value == 255
 
 
+def test_burner_modulation_is_a_percentage_and_drops_out_of_range_values():
+    """The gateway's current modulation is shown as a percentage of full fire."""
+    from unittest.mock import MagicMock
+
+    from homeassistant.const import PERCENTAGE
+
+    from custom_components.vaillant_plus.sensor import (
+        SENSOR_DESCRIPTIONS,
+        VaillantSensorEntity,
+    )
+
+    description = next(
+        d for d in SENSOR_DESCRIPTIONS if d.key == "valueModulation_currentValue"
+    )
+    assert description.native_unit_of_measurement == PERCENTAGE
+
+    entity = VaillantSensorEntity(MagicMock(), description)
+    # Values captured from a turboTEC plus warming up on a 43 °C setpoint.
+    for value in (42, 11, 0, 100):
+        entity.update_from_latest_data({"valueModulation_currentValue": value})
+        assert entity.native_value == value
+
+    for bad in (255, -1, "000080bf"):
+        entity.update_from_latest_data({"valueModulation_currentValue": bad})
+        assert entity.native_value is None
+        assert entity.available is False
+
+
 def test_indoor_temperature_is_only_created_for_devices_that_report_it():
     """`indoor_temperature` is a gateway attribute; a vSMART never sends it.
 
