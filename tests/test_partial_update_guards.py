@@ -71,7 +71,7 @@ def test_water_heater_uses_tank_temperature_when_available():
     source = (ROOT / "custom_components/vaillant_plus/water_heater.py").read_text()
 
     assert '"Tank_temperature"' in source
-    assert 'return self.get_device_attr("Flow_temperature")' in source
+    assert 'valid_temperature(self.get_device_attr("Flow_temperature"))' in source
 
 
 def test_water_heater_prefers_current_dhw_setpoint():

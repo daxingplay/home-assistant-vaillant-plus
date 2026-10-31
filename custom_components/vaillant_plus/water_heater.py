@@ -23,6 +23,7 @@ from .const import (
 )
 from .discovery import MissingAttributeWarning, async_register_discovery
 from .entity import VaillantEntity
+from .utils import valid_temperature
 
 # from .entity import VaillantCoordinator, VaillantEntity
 
@@ -148,15 +149,15 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     def current_temperature(self) -> float:
         """Return the current dhw temperature."""
 
-        value = self.get_device_attr("Tank_temperature")
+        value = valid_temperature(self.get_device_attr("Tank_temperature"))
         if value is not None:
             return value
-        return self.get_device_attr("Flow_temperature")
+        return valid_temperature(self.get_device_attr("Flow_temperature"))
 
     def _dhw_target_temperature_value(self) -> Any:
         """Return the current target DHW temperature from known API variants."""
         for attr in DHW_SETPOINT_ATTRS:
-            value = self.get_device_attr(attr)
+            value = valid_temperature(self.get_device_attr(attr))
             if value is not None:
                 return value
         return None
