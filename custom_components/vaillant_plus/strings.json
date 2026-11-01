@@ -25,6 +25,9 @@
       "burn_status": {
         "name": "Burn status"
       },
+      "burner_modulation": {
+        "name": "Burner modulation"
+      },
       "ch_power": {
         "name": "Central heating power raw"
       },
@@ -130,6 +133,9 @@
       "heating_system_setting": {
         "name": "Heating system setting"
       },
+      "indoor_temperature": {
+        "name": "Indoor temperature"
+      },
       "lower_limitation_of_ch_setpoint": {
         "name": "Lower limitation of central heating setpoint"
       },
@@ -144,6 +150,9 @@
       },
       "mode_setting_ch": {
         "name": "Central heating mode setting"
+      },
+      "mode_setting_dhw": {
+        "name": "Domestic hot water mode setting"
       },
       "outdoor_temperature": {
         "name": "Outdoor temperature"
@@ -209,6 +218,20 @@
       },
       "weather_compensation": {
         "name": "Weather compensation"
+      }
+    },
+    "climate": {
+      "central_heating": {
+        "name": "Central heating"
+      }
+    },
+    "water_heater": {
+      "domestic_hot_water": {
+        "name": "Domestic hot water",
+        "state": {
+          "on": "On",
+          "off": "Off"
+        }
       }
     }
   }

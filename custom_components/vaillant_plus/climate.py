@@ -18,8 +18,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client import VaillantClient
 from .const import CONF_DID, DOMAIN, API_CLIENT
+from .device import VaillantDeviceType, resolve_device_type
 from .discovery import MissingAttributeWarning, async_register_discovery
 from .entity import VaillantEntity
+from .utils import valid_temperature
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,16 +30,26 @@ DEFAULT_TEMPERATURE_INCREASE = 0.5
 PRESET_SUMMER = "Summer"
 PRESET_WINTER = "Winter"
 
-SUPPORTED_FEATURES = (
+BASE_FEATURES = (
     ClimateEntityFeature.TARGET_TEMPERATURE
-    | ClimateEntityFeature.PRESET_MODE
     | ClimateEntityFeature.TURN_ON
     | ClimateEntityFeature.TURN_OFF
 )
 SUPPORTED_HVAC_MODES = [HVACMode.HEAT, HVACMode.OFF]
 SUPPORTED_PRESET_MODES = [PRESET_COMFORT]
 
-HEATING_ENABLE_ATTRS = ("Enabled_Heating", "Heating_Enable")
+# A vSMART reports both; a gateway reports only `Heating_Enable`. That is
+# also the one the entity writes, so it is read first: otherwise the
+# optimistic update after turning the heating off is shadowed by
+# `Enabled_Heating` until the cloud echoes the change.
+HEATING_ENABLE_ATTRS = ("Heating_Enable", "Enabled_Heating")
+
+# The central heating range a gateway falls back to. A gateway with a boiler
+# bound reports the boiler's own `Lower/Upper_Limitation_of_CH_Setpoint`
+# (30-60 °C on a turboTEC plus), which takes precedence; one without a boiler
+# reports none, or the "no reading" sentinel.
+FLOW_MIN_TEMPERATURE = 30.0
+FLOW_MAX_TEMPERATURE = 75.0
 
 
 async def async_setup_entry(
@@ -63,9 +75,12 @@ async def async_setup_entry(
             missing_attribute_warning.report(HEATING_ENABLE_ATTRS, device_attrs)
             return
 
-        _LOGGER.debug("New climate found")
+        device_type = resolve_device_type(client.device)
+        entity_class = _ENTITY_CLASSES[device_type]
+
+        _LOGGER.debug("New %s climate found", device_type.value)
         added_entities.append("climate")
-        async_add_devices([VaillantClimate(client)])
+        async_add_devices([entity_class(client)])
 
     async_register_discovery(hass, device_id, client, async_new_climate)
 
@@ -73,10 +88,22 @@ async def async_setup_entry(
 
 
 class VaillantClimate(VaillantEntity, ClimateEntity):
-    """Vaillant vSMART Climate."""
+    """Shared behaviour of the Vaillant climate entities.
 
-    # The main feature of the device: it carries the device name itself.
+    Everything here is true of both product families. What differs - which
+    setpoint is written, which sensor is read back, whether a comfort preset
+    exists - is declared by the subclasses rather than decided at runtime.
+    """
+
     _attr_has_entity_name = True
+    # A gateway also has a water heater on the same device, so the climate
+    # cannot carry the device name alone: both would show as the same row.
+    _attr_translation_key = "central_heating"
+
+    # The attribute this entity writes when the target temperature changes.
+    _setpoint_attr: str
+    # The attributes read back as the current temperature, in priority order.
+    _temperature_attrs: tuple[str, ...] = ()
 
     def _heating_enabled_value(self) -> Any:
         """Return the current heating enable value from known API variants."""
@@ -97,16 +124,10 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         return f"{self.device.id}_climate"
 
     @property
-    def name(self) -> str | None:
-        """Return the name of the climate."""
-
-        return None
-
-    @property
     def supported_features(self) -> int:
         """Return the flag of supported features for the climate."""
 
-        return SUPPORTED_FEATURES
+        return BASE_FEATURES
 
     @property
     def temperature_unit(self) -> str:
@@ -115,16 +136,20 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         return UnitOfTemperature.CELSIUS
 
     @property
-    def current_temperature(self) -> float:
-        """Return the current room temperature."""
+    def current_temperature(self) -> float | None:
+        """Return the temperature this entity is controlling towards."""
 
-        return self.get_device_attr("Room_Temperature")
+        for attr in self._temperature_attrs:
+            value = valid_temperature(self.get_device_attr(attr))
+            if value is not None:
+                return value
+        return None
 
     @property
-    def target_temperature(self) -> float:
-        """Return the targeted room temperature."""
+    def target_temperature(self) -> float | None:
+        """Return the targeted temperature."""
 
-        return self.get_device_attr("Room_Temperature_Setpoint_Comfort")
+        return valid_temperature(self.get_device_attr(self._setpoint_attr))
 
     @property
     def hvac_modes(self) -> list[HVACMode]:
@@ -153,27 +178,14 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         if self._heating_enabled_value() in (0, False):
             return HVACAction.OFF
 
-        try:
-            if self.get_device_attr("Room_Temperature") < self.get_device_attr(
-                "Room_Temperature_Setpoint_Comfort"
-            ):
-                return HVACAction.HEATING
-        except TypeError:
-            pass
+        current = self.current_temperature
+        target = self.target_temperature
+        # Either can be unknown - a gateway with no boiler bound reports both
+        # as sentinels - and no claim about heating can be made without both.
+        if current is not None and target is not None and current < target:
+            return HVACAction.HEATING
 
         return HVACAction.IDLE
-
-    @property
-    def preset_modes(self) -> list[str]:
-        """Return the list of available HVAC preset modes."""
-
-        return SUPPORTED_PRESET_MODES
-
-    @property
-    def preset_mode(self) -> str:
-        """Return the currently selected HVAC preset mode."""
-
-        return PRESET_COMFORT
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Select new HVAC operation mode."""
@@ -183,6 +195,7 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         if hvac_mode == HVACMode.OFF:
             await self.send_commands({"Heating_Enable": False})
         elif hvac_mode == HVACMode.HEAT:
+            # Both families report Mode_Setting_CH: "Cruising", so both get it.
             await self.send_commands({
                 "Heating_Enable": True,
                 "Mode_Setting_CH": "Cruising",
@@ -196,15 +209,8 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         """Turn the central heating off."""
         await self.async_set_hvac_mode(HVACMode.OFF)
 
-    async def async_set_preset_mode(self, preset_mode: str) -> None:
-        """Select new HVAC preset mode."""
-
-        _LOGGER.debug("Setting HVAC preset mode to: %s", preset_mode)
-
-        return
-
     async def async_set_temperature(self, **kwargs) -> None:
-        """Update target room temperature value."""
+        """Update the target temperature."""
 
         new_temperature = kwargs.get(ATTR_TEMPERATURE)
         if new_temperature is None:
@@ -212,6 +218,74 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
 
         _LOGGER.debug("Setting target temperature to: %s", new_temperature)
 
-        await self.send_commands({
-            "Room_Temperature_Setpoint_Comfort": new_temperature,
-        })
+        await self.send_commands({self._setpoint_attr: new_temperature})
+
+
+class VaillantVSmartClimate(VaillantClimate):
+    """The vSMART thermostat, which controls the temperature of a room."""
+
+    _setpoint_attr = "Room_Temperature_Setpoint_Comfort"
+    _temperature_attrs = ("Room_Temperature",)
+
+    @property
+    def supported_features(self) -> int:
+        """Return the flag of supported features for the climate."""
+
+        return BASE_FEATURES | ClimateEntityFeature.PRESET_MODE
+
+    @property
+    def preset_modes(self) -> list[str]:
+        """Return the list of available HVAC preset modes."""
+
+        return SUPPORTED_PRESET_MODES
+
+    @property
+    def preset_mode(self) -> str:
+        """Return the currently selected HVAC preset mode."""
+
+        return PRESET_COMFORT
+
+    async def async_set_preset_mode(self, preset_mode: str) -> None:
+        """Select new HVAC preset mode."""
+
+        _LOGGER.debug("Setting HVAC preset mode to: %s", preset_mode)
+
+        return
+
+
+class VaillantGatewayClimate(VaillantClimate):
+    """The familyCONNECT gateway, which controls the boiler flow temperature.
+
+    It has no room setpoint, so it advertises no comfort preset: Home
+    Assistant rejects a climate entity that offers PRESET_MODE and then
+    returns None for it.
+    """
+
+    _setpoint_attr = "Flow_Temperature_Setpoint"
+    # The setpoint is a flow temperature, so the current temperature must be
+    # one too: comparing the room (`indoor_temperature`, ~21 °C) against a
+    # 45 °C flow setpoint made the heating always look like it was running.
+    # A gateway with no boiler bound reports no `Flow_temperature`; the
+    # entity then shows no current temperature rather than the wrong one.
+    # The room reading stays available as its own sensor.
+    _temperature_attrs = ("Flow_temperature",)
+
+    @property
+    def min_temp(self) -> float:
+        """Return the minimum flow temperature that can be set."""
+
+        value = valid_temperature(self.get_device_attr("Lower_Limitation_of_CH_Setpoint"))
+        return FLOW_MIN_TEMPERATURE if value is None else value
+
+    @property
+    def max_temp(self) -> float:
+        """Return the maximum flow temperature that can be set."""
+
+        value = valid_temperature(self.get_device_attr("Upper_Limitation_of_CH_Setpoint"))
+        return FLOW_MAX_TEMPERATURE if value is None else value
+
+
+_ENTITY_CLASSES = {
+    VaillantDeviceType.VSMART: VaillantVSmartClimate,
+    VaillantDeviceType.GATEWAY: VaillantGatewayClimate,
+}
