@@ -27,6 +27,11 @@
         }
     },
     "entity": {
+        "number": {
+            "indoor_temperature": {
+                "name": "气候补偿室内温度"
+            }
+        },
         "sensor": {
             "burn_status": {
                 "name": "燃烧状态"

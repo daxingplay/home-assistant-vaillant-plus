@@ -25,6 +25,7 @@ from .const import (
 PLATFORMS: list[Platform] = [
     Platform.CLIMATE,
     Platform.BINARY_SENSOR,
+    Platform.NUMBER,
     Platform.SENSOR,
     Platform.WATER_HEATER,
 ]

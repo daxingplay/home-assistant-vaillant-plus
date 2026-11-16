@@ -36,6 +36,7 @@ def _descriptions(module_name: str, container: str) -> list:
 DOMAINS = {
     "sensor": ("sensor", "SENSOR_DESCRIPTIONS"),
     "binary_sensor": ("binary_sensor", "BINARY_SENSOR_DESCRIPTIONS"),
+    "number": ("number", "NUMBER_DESCRIPTIONS"),
 }
 
 
