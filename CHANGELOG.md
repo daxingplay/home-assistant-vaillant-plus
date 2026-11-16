@@ -2,6 +2,7 @@
 
 <!--next-version-placeholder-->
 ## Unreleased
+* [#66](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/66) New `number` entity for the weather compensation indoor temperature (`indoor_temperature`, 气候补偿室内温度). It is the "indoor temperature" knob on the weather compensation page of the Vaillant app. While weather compensation is active, it is the setpoint that matters. The climate entity's target temperature writes `Room_Temperature_Setpoint_Comfort`, a different field that has no effect then. The entity is created only for devices that report the field. It accepts 5–30 °C in 0.5 °C steps, because the gateway does not report limits for this field.
 * Diagnostics now report the fields that identify a device's product family (`platform`, `product_id`, `sub_product_key`), so a report about an unsupported device can be acted on without asking for a second round of information. Per-unit identifiers such as the serial number stay out of the dump, as before.
 
 ## v1.4.0 (2026-08-30)

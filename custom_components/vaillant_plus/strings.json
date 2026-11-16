@@ -21,6 +21,11 @@
     }
   },
   "entity": {
+    "number": {
+      "indoor_temperature": {
+        "name": "Weather compensation indoor temperature"
+      }
+    },
     "sensor": {
       "burn_status": {
         "name": "Burn status"
