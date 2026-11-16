@@ -72,3 +72,33 @@ def test_enhanced_diagnostic_sensor_keys_are_exposed():
     }
 
     assert expected <= _sensor_description_keys()
+
+
+def _disabled_by_default_keys() -> set[str]:
+    tree = ast.parse(
+        (ROOT / "custom_components/vaillant_plus/sensor.py").read_text()
+    )
+    keys: set[str] = set()
+    for node in ast.walk(tree):
+        if not (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "SensorEntityDescription"
+        ):
+            continue
+        values = {
+            keyword.arg: keyword.value.value
+            for keyword in node.keywords
+            if isinstance(keyword.value, ast.Constant)
+        }
+        if values.get("entity_registry_enabled_default") is False:
+            keys.add(str(values["key"]))
+    return keys
+
+
+def test_undecoded_gas_sensors_are_disabled_by_default():
+    """The raw gas strings look broken, so they must be opted into, see #67."""
+    gas_keys = {key for key in _sensor_description_keys() if key.startswith("gas_")}
+
+    assert gas_keys
+    assert gas_keys <= _disabled_by_default_keys()

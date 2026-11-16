@@ -2,6 +2,7 @@
 
 <!--next-version-placeholder-->
 ## Unreleased
+* [#67](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/67) The raw gas consumption sensors (`gas_*_consumption_*`, `gas_consumption`) are now disabled by default on new installations. They show the cloud's 8-digit hex strings, which look broken and cannot feed the Energy dashboard until the unit is known. Existing installations keep them as they are. To turn them back on, enable them from the device page.
 * Diagnostics now report the fields that identify a device's product family (`platform`, `product_id`, `sub_product_key`), so a report about an unsupported device can be acted on without asking for a second round of information. Per-unit identifiers such as the serial number stay out of the dump, as before.
 
 ## v1.4.0 (2026-08-30)

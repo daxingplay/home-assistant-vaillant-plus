@@ -28,6 +28,12 @@ from .entity import VaillantEntity
 _LOGGER = logging.getLogger(__name__)
 
 
+# The gas consumption attributes arrive as 8 hex digits whose unit is still
+# unknown (issue #67): the value reads as a little-endian IEEE-754 float32, and
+# every sample seen so far decodes to a whole number that grows over the day,
+# but what that number counts is unconfirmed. Until it is, the raw strings
+# stay available for investigation but are off by default, so new installs are
+# not shown values that look broken.
 SENSOR_DESCRIPTIONS = (
     SensorEntityDescription(
         key="Room_Temperature_Setpoint_Comfort",
@@ -154,54 +160,63 @@ SENSOR_DESCRIPTIONS = (
         name="Central heating gas consumption today raw",
         translation_key="gas_ch_consumption_today",
         entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
         key="gas_ch_consumption_yesterday",
         name="Central heating gas consumption yesterday raw",
         translation_key="gas_ch_consumption_yesterday",
         entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
         key="gas_ch_consumption_monthly",
         name="Central heating gas consumption monthly raw",
         translation_key="gas_ch_consumption_monthly",
         entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
         key="gas_ch_consumption_yearly",
         name="Central heating gas consumption yearly raw",
         translation_key="gas_ch_consumption_yearly",
         entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
         key="gas_dhw_consumption_today",
         name="Domestic hot water gas consumption today raw",
         translation_key="gas_dhw_consumption_today",
         entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
         key="gas_dhw_consumption_yesterday",
         name="Domestic hot water gas consumption yesterday raw",
         translation_key="gas_dhw_consumption_yesterday",
         entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
         key="gas_dhw_consumption_monthly",
         name="Domestic hot water gas consumption monthly raw",
         translation_key="gas_dhw_consumption_monthly",
         entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
         key="gas_dhw_consumption_yearly",
         name="Domestic hot water gas consumption yearly raw",
         translation_key="gas_dhw_consumption_yearly",
         entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
         key="gas_consumption",
         name="Gas consumption raw",
         translation_key="gas_consumption",
         entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
         key="CH_workTime",
