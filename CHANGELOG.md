@@ -2,6 +2,7 @@
 
 <!--next-version-placeholder-->
 ## Unreleased
+* [#65](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/65) **Chinese entity names now actually show up.** The Chinese translations shipped as `translations/zh.json`, but Home Assistant asks for `zh-Hans.json` on a Simplified Chinese install and never reads `zh`, so every entity name, and the config flow, quietly fell back to English. The file is now `zh-Hans.json`. If you worked around this by copying `zh.json` to `zh-Hans.json` by hand, nothing more is needed: the update replaces your copy with the same content. The translation test now compares the names Home Assistant resolves with the language's own file. The old check only asked whether a name resolved, which the English fallback always satisfies.
 * Diagnostics now report the fields that identify a device's product family (`platform`, `product_id`, `sub_product_key`), so a report about an unsupported device can be acted on without asking for a second round of information. Per-unit identifiers such as the serial number stay out of the dump, as before.
 
 ## v1.4.0 (2026-08-30)
