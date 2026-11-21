@@ -103,11 +103,13 @@ class VaillantPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if len(device_list) == 0:
                     errors["base"] = "no_devices"
                 else:
+                    _LOGGER.debug(
+                        "The account has %d bound device(s): %s",
+                        len(device_list),
+                        [(d.id, d.product_name) for d in device_list],
+                    )
                     for device_info in device_list:
-                        product_name = device_info.product_name
-                        device_id = device_info.id
-                        device_name = f"{product_name}_{device_id}"
-                        self._cloud_devices[device_name] = device_info
+                        self._cloud_devices[device_info.id] = device_info
                     return await self.async_step_select()
 
         return self.async_show_form(
@@ -140,17 +142,51 @@ class VaillantPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_abort(reason="reauth_successful")
 
             return self.async_create_entry(
-                title=cloud_device.product_name,
+                title=_device_title(cloud_device),
                 data={
                     CONF_DID: unique_id,
                     CONF_TOKEN: self._cloud_token.serialize(),
                 },
             )
 
+        configured = self._async_current_ids()
+        options = {
+            device_id: _device_label(device, device_id in configured)
+            for device_id, device in self._cloud_devices.items()
+        }
+        # Offer a device that is not set up yet first; picking a configured one
+        # still works and refreshes its entry's login.
+        default = next(
+            (device_id for device_id in options if device_id not in configured),
+            next(iter(options)),
+        )
         select_schema = vol.Schema(
-            {vol.Required("select_device"): vol.In(list(self._cloud_devices))}
+            {vol.Required("select_device", default=default): vol.In(options)}
         )
 
         return self.async_show_form(
             step_id="select", data_schema=select_schema, errors=errors
         )
+
+
+def _device_title(device: Device) -> str:
+    """Name a device the way its owner knows it.
+
+    `product_name` is the catalog name every unit of a model shares, so two
+    vSMART Pro on one account would get the same title. The alias the owner
+    gave the device in the app tells them apart. It is only provided by
+    vaillant-plus-cn-api 2.2.0 and later, so it is read defensively.
+    """
+    alias = getattr(device, "dev_alias", "") or ""
+    product_name = device.product_name or ""
+    if alias and alias != product_name:
+        return f"{alias} ({product_name})" if product_name else alias
+    return product_name or device.id
+
+
+def _device_label(device: Device, configured: bool) -> str:
+    """Label one device in the selection list, unique per device."""
+    label = f"{_device_title(device)} - {device.id}"
+    if configured:
+        label += " ✓"
+    return label

@@ -22,7 +22,7 @@
                 "data": {
                     "select_device": "Equipamento Vaillant"
                 },
-                "description": "Selecione o equipamento Vaillant que quer configurar."
+                "description": "Selecione o equipamento Vaillant que quer configurar. Cada equipamento é adicionado como uma entrada própria; repita para adicionar o seguinte. Os equipamentos marcados com ✓ já estão configurados, e escolhê-los de novo atualiza o login."
             }
         }
     }
