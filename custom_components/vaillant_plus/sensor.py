@@ -14,6 +14,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     EntityCategory,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    UnitOfEnergy,
     UnitOfPressure,
     UnitOfTemperature,
 )
@@ -24,16 +25,11 @@ from .client import VaillantClient
 from .const import CONF_DID, DOMAIN, API_CLIENT
 from .discovery import async_register_discovery
 from .entity import VaillantEntity
+from .utils import decode_gas_consumption
 
 _LOGGER = logging.getLogger(__name__)
 
 
-# The gas consumption attributes arrive as 8 hex digits whose unit is still
-# unknown (issue #67): the value reads as a little-endian IEEE-754 float32, and
-# every sample seen so far decodes to a whole number that grows over the day,
-# but what that number counts is unconfirmed. Until it is, the raw strings
-# stay available for investigation but are off by default, so new installs are
-# not shown values that look broken.
 SENSOR_DESCRIPTIONS = (
     SensorEntityDescription(
         key="Room_Temperature_Setpoint_Comfort",
@@ -157,66 +153,82 @@ SENSOR_DESCRIPTIONS = (
     ),
     SensorEntityDescription(
         key="gas_ch_consumption_today",
-        name="Central heating gas consumption today raw",
+        name="Central heating gas consumption today",
         translation_key="gas_ch_consumption_today",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=1,
     ),
     SensorEntityDescription(
         key="gas_ch_consumption_yesterday",
-        name="Central heating gas consumption yesterday raw",
+        name="Central heating gas consumption yesterday",
         translation_key="gas_ch_consumption_yesterday",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
     ),
     SensorEntityDescription(
         key="gas_ch_consumption_monthly",
-        name="Central heating gas consumption monthly raw",
+        name="Central heating gas consumption monthly",
         translation_key="gas_ch_consumption_monthly",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=1,
     ),
     SensorEntityDescription(
         key="gas_ch_consumption_yearly",
-        name="Central heating gas consumption yearly raw",
+        name="Central heating gas consumption yearly",
         translation_key="gas_ch_consumption_yearly",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=1,
     ),
     SensorEntityDescription(
         key="gas_dhw_consumption_today",
-        name="Domestic hot water gas consumption today raw",
+        name="Domestic hot water gas consumption today",
         translation_key="gas_dhw_consumption_today",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=1,
     ),
     SensorEntityDescription(
         key="gas_dhw_consumption_yesterday",
-        name="Domestic hot water gas consumption yesterday raw",
+        name="Domestic hot water gas consumption yesterday",
         translation_key="gas_dhw_consumption_yesterday",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
     ),
     SensorEntityDescription(
         key="gas_dhw_consumption_monthly",
-        name="Domestic hot water gas consumption monthly raw",
+        name="Domestic hot water gas consumption monthly",
         translation_key="gas_dhw_consumption_monthly",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=1,
     ),
     SensorEntityDescription(
         key="gas_dhw_consumption_yearly",
-        name="Domestic hot water gas consumption yearly raw",
+        name="Domestic hot water gas consumption yearly",
         translation_key="gas_dhw_consumption_yearly",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=1,
     ),
     SensorEntityDescription(
         key="gas_consumption",
-        name="Gas consumption raw",
+        name="Gas consumption",
         translation_key="gas_consumption",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=1,
     ),
     SensorEntityDescription(
         key="CH_workTime",
@@ -396,6 +408,13 @@ SENSOR_DESCRIPTIONS = (
 )
 
 
+GAS_CONSUMPTION_KEYS = frozenset(
+    description.key
+    for description in SENSOR_DESCRIPTIONS
+    if description.key.startswith("gas_")
+)
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> bool:
@@ -454,5 +473,7 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
             return
 
         value = data.get(self.entity_description.key)
-        self._attr_native_value = value
         self._attr_available = value is not None
+        if self.entity_description.key in GAS_CONSUMPTION_KEYS:
+            value = decode_gas_consumption(value)
+        self._attr_native_value = value

@@ -89,31 +89,31 @@
                 "name": "供水温度设定"
             },
             "gas_ch_consumption_monthly": {
-                "name": "采暖本月燃气消耗（原始值）"
+                "name": "采暖本月燃气消耗"
             },
             "gas_ch_consumption_today": {
-                "name": "采暖今日燃气消耗（原始值）"
+                "name": "采暖今日燃气消耗"
             },
             "gas_ch_consumption_yearly": {
-                "name": "采暖本年燃气消耗（原始值）"
+                "name": "采暖本年燃气消耗"
             },
             "gas_ch_consumption_yesterday": {
-                "name": "采暖昨日燃气消耗（原始值）"
+                "name": "采暖昨日燃气消耗"
             },
             "gas_consumption": {
-                "name": "燃气消耗（原始值）"
+                "name": "燃气消耗"
             },
             "gas_dhw_consumption_monthly": {
-                "name": "热水本月燃气消耗（原始值）"
+                "name": "热水本月燃气消耗"
             },
             "gas_dhw_consumption_today": {
-                "name": "热水今日燃气消耗（原始值）"
+                "name": "热水今日燃气消耗"
             },
             "gas_dhw_consumption_yearly": {
-                "name": "热水本年燃气消耗（原始值）"
+                "name": "热水本年燃气消耗"
             },
             "gas_dhw_consumption_yesterday": {
-                "name": "热水昨日燃气消耗（原始值）"
+                "name": "热水昨日燃气消耗"
             },
             "gateway_fault_list_1": {
                 "name": "网关故障列表 1"
