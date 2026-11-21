@@ -38,11 +38,10 @@ BASE_FEATURES = (
 SUPPORTED_HVAC_MODES = [HVACMode.HEAT, HVACMode.OFF]
 SUPPORTED_PRESET_MODES = [PRESET_COMFORT]
 
-# A vSMART reports both; a gateway reports only `Heating_Enable`. That is
-# also the one the entity writes, so it is read first: otherwise the
-# optimistic update after turning the heating off is shadowed by
-# `Enabled_Heating` until the cloud echoes the change.
-HEATING_ENABLE_ATTRS = ("Heating_Enable", "Enabled_Heating")
+# The attributes carrying the heating on/off state, in the order a vSMART
+# reads them. A vSMART reports both, a gateway only `Heating_Enable`, which is
+# also the one the entity writes.
+HEATING_ENABLE_ATTRS = ("Enabled_Heating", "Heating_Enable")
 
 # The central heating range a gateway falls back to. A gateway with a boiler
 # bound reports the boiler's own `Lower/Upper_Limitation_of_CH_Setpoint`
@@ -104,10 +103,12 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
     _setpoint_attr: str
     # The attributes read back as the current temperature, in priority order.
     _temperature_attrs: tuple[str, ...] = ()
+    # The attributes read back as the heating on/off state, in priority order.
+    _heating_enable_attrs: tuple[str, ...] = HEATING_ENABLE_ATTRS
 
     def _heating_enabled_value(self) -> Any:
         """Return the current heating enable value from known API variants."""
-        for attr in HEATING_ENABLE_ATTRS:
+        for attr in self._heating_enable_attrs:
             value = self.get_device_attr(attr)
             if value is not None:
                 return value
@@ -194,12 +195,26 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
 
         if hvac_mode == HVACMode.OFF:
             await self.send_commands({"Heating_Enable": False})
+            self._mirror_heating_enable(False)
         elif hvac_mode == HVACMode.HEAT:
             # Both families report Mode_Setting_CH: "Cruising", so both get it.
             await self.send_commands({
                 "Heating_Enable": True,
                 "Mode_Setting_CH": "Cruising",
             })
+            self._mirror_heating_enable(True)
+
+    def _mirror_heating_enable(self, enabled: bool) -> None:
+        """Apply a written `Heating_Enable` to the other state attributes too.
+
+        A vSMART's state is read from `Enabled_Heating`, which the cloud only
+        updates once the device has acted on the change. Until then the mode
+        would snap back, so mirror the value locally; the next push from the
+        cloud replaces it either way.
+        """
+        for attr in self._heating_enable_attrs:
+            if attr != "Heating_Enable" and self.get_device_attr(attr) is not None:
+                self.set_optimistic_value(attr, int(enabled))
 
     async def async_turn_on(self) -> None:
         """Turn the central heating on."""
@@ -262,6 +277,8 @@ class VaillantGatewayClimate(VaillantClimate):
     """
 
     _setpoint_attr = "Flow_Temperature_Setpoint"
+    # It reports only `Heating_Enable`.
+    _heating_enable_attrs = ("Heating_Enable",)
     # The setpoint is a flow temperature, so the current temperature must be
     # one too: comparing the room (`indoor_temperature`, ~21 °C) against a
     # 45 °C flow setpoint made the heating always look like it was running.
