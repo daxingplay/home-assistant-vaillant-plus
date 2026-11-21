@@ -118,10 +118,6 @@ async def test_home_assistant_resolves_every_entity_name(hass):
 
     await async_setup_component(hass, DOMAIN, {})
 
-    # `zh-Hans` is the code Home Assistant uses for Simplified Chinese; there is
-    # no `zh` locale. Home Assistant loads `translations/<language>.json` and
-    # backfills every missing key from English, so a key that "resolves" proves
-    # nothing: compare against the language's own file instead.
     for language in LANGUAGES:
         translations = await async_get_translations(
             hass, language, "entity", {DOMAIN}
