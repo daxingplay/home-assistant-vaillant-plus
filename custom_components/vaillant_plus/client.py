@@ -25,6 +25,18 @@ from .const import EVT_DEVICE_CONNECTED, EVT_DEVICE_UPDATED, EVT_TOKEN_UPDATED
 
 _LOGGER = logging.getLogger(__name__)
 
+# hass.data key for the per-account login state shared by config entries.
+TOKEN_REFRESH = "vaillant_plus_token_refresh"
+
+
+class _TokenRefresh:
+    """Serialises logins for one account and remembers the newest token."""
+
+    def __init__(self, token: Token) -> None:
+        self.lock = asyncio.Lock()
+        self.token = token
+
+
 class VaillantClient:
     """API client for communicating with the cloud."""
 
@@ -131,26 +143,48 @@ class VaillantClient:
 
         await self._websocket_client.connect()
 
+    def _token_refresh(self) -> _TokenRefresh:
+        """Return the login state shared by this account's config entries."""
+        accounts: dict[str, _TokenRefresh] = self._hass.data.setdefault(
+            TOKEN_REFRESH, {}
+        )
+        if self._token.username not in accounts:
+            accounts[self._token.username] = _TokenRefresh(self._token)
+        return accounts[self._token.username]
+
     async def _get_token(self, failed_token: Token | None = None) -> None:
         """Get a working token, by login only if nobody else already did.
 
-        `failed_token` is the token the rejected request used. If the current
-        token is no longer that one, another config entry for this account
+        `failed_token` is the token the rejected request used. If the newest
+        token for this account is no longer that one, another config entry
         refreshed it while this request was in flight, and logging in again
         would invalidate the token it just published - each entry knocking the
         other offline in turn. Adopt theirs instead.
-        """
-        if failed_token is not None and not Token.equals(self._token, failed_token):
-            _LOGGER.debug(
-                "Token was refreshed by another config entry, retrying with it"
-            )
-            self._api_client.update_token(self._token)
-            return
 
-        _LOGGER.info("Token expired, retrieve new token...")
-        token_new = await self._api_client.login(self._token.username, self._token.password)
-        self._token = token_new
-        self._api_client.update_token(token_new)
+        Logins are serialised per account, so two entries rejected at the same
+        moment (typically both starting with the same expired stored token)
+        log in once between them: the second finds the newer token once it
+        gets the lock.
+        """
+        refresh = self._token_refresh()
+        async with refresh.lock:
+            if failed_token is not None and not Token.equals(
+                refresh.token, failed_token
+            ):
+                _LOGGER.debug(
+                    "Token was refreshed by another config entry, retrying with it"
+                )
+                self._token = refresh.token
+                self._api_client.update_token(refresh.token)
+                return
+
+            _LOGGER.info("Token expired, retrieve new token...")
+            token_new = await self._api_client.login(
+                self._token.username, self._token.password
+            )
+            refresh.token = token_new
+            self._token = token_new
+            self._api_client.update_token(token_new)
         async_dispatcher_send(
             self._hass, EVT_TOKEN_UPDATED.format(token_new.username), token_new
         )

@@ -120,3 +120,45 @@ async def test_close_stops_listening_for_token_updates(hass, device_api_client):
     await hass.async_block_till_done()
 
     assert device_api_client._token.access_token == "old"
+
+
+async def test_entries_rejected_at_the_same_moment_log_in_once(
+    hass, device_api_client
+):
+    """Typically at startup: both entries load the same expired stored token.
+
+    Neither has seen a newer token when its request fails, so without
+    serialising the logins both would log in, and the second login would
+    invalidate the token the first one had just obtained.
+    """
+    import asyncio
+
+    from custom_components.vaillant_plus.client import VaillantClient
+
+    first = device_api_client
+    first._token = _token("t1")
+    with patch(
+        "custom_components.vaillant_plus.utils.get_aiohttp_session"
+    ), patch("custom_components.vaillant_plus.client.VaillantApiClient"):
+        second = VaillantClient(hass, _token("t1"), "2")
+
+    async def slow_login(*_):
+        await asyncio.sleep(0.01)
+        return _token("t2")
+
+    try:
+        first._api_client.login = AsyncMock(side_effect=slow_login)
+        second._api_client.login = AsyncMock(side_effect=slow_login)
+
+        await asyncio.gather(
+            first._get_token(_token("t1")), second._get_token(_token("t1"))
+        )
+
+        logins = (
+            first._api_client.login.await_count + second._api_client.login.await_count
+        )
+        assert logins == 1
+        assert first._token.access_token == "t2"
+        assert second._token.access_token == "t2"
+    finally:
+        await second.close()
