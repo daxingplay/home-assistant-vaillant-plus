@@ -470,3 +470,10 @@ async def test_gateway_heating_off_ignores_the_burner(hass, device_api_client):
     climate = VaillantGatewayClimate(device_api_client)
 
     assert climate.hvac_action == HVACAction.OFF
+
+
+async def test_gateway_setpoint_moves_in_half_degrees(hass, device_api_client):
+    device_api_client._device_attrs = dict(GATEWAY_ATTRS)
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.target_temperature_step == 0.5

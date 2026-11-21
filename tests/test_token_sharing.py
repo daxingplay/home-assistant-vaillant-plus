@@ -162,3 +162,38 @@ async def test_entries_rejected_at_the_same_moment_log_in_once(
         assert second._token.access_token == "t2"
     finally:
         await second.close()
+
+
+async def test_failed_setup_closes_its_client(hass, bypass_login, bypass_get_device):
+    """A setup that fails after the client is built must not leave it
+    subscribed: every retry would add another client adopting tokens."""
+    from homeassistant.config_entries import ConfigEntryState
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.vaillant_plus import async_setup
+    from custom_components.vaillant_plus.client import VaillantClient
+    from custom_components.vaillant_plus.const import DOMAIN
+
+    from .const import MOCK_CONFIG_ENTRY_DATA, MOCK_DID
+
+    entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG_ENTRY_DATA, entry_id=MOCK_DID)
+    entry.add_to_hass(hass)
+    closed = []
+    real_close = VaillantClient.close
+
+    async def record_close(self):
+        closed.append(self)
+        await real_close(self)
+
+    with patch.object(VaillantClient, "close", record_close), patch.object(
+        hass.config_entries,
+        "async_forward_entry_setups",
+        side_effect=RuntimeError("platform setup failed"),
+    ):
+        assert await async_setup(hass, {})
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.SETUP_ERROR
+    assert len(closed) == 1
+    assert closed[0]._unsub_token_update is None

@@ -283,6 +283,8 @@ class VaillantGatewayClimate(VaillantClimate):
     _setpoint_attr = "Flow_Temperature_Setpoint"
     # It reports only `Heating_Enable`.
     _heating_enable_attrs = ("Heating_Enable",)
+    # eBUS setpoints have half-degree resolution.
+    _attr_target_temperature_step = 0.5
     # The setpoint is a flow temperature, so the current temperature must be
     # one too: comparing the room (`indoor_temperature`, ~21 °C) against a
     # 45 °C flow setpoint made the heating always look like it was running.

@@ -165,7 +165,8 @@ def test_burner_modulation_is_a_percentage_and_drops_out_of_range_values():
         entity.update_from_latest_data({"valueModulation_currentValue": value})
         assert entity.native_value == value
 
-    for bad in (255, -1, "000080bf"):
+    # `True` / `False` are ints to Python, but not a modulation.
+    for bad in (255, -1, "000080bf", True, False):
         entity.update_from_latest_data({"valueModulation_currentValue": bad})
         assert entity.native_value is None
         assert entity.available is False
