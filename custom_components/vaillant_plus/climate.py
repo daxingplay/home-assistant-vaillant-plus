@@ -72,9 +72,9 @@ async def async_setup_entry(
         device_type = resolve_device_type(client.device)
         entity_class = _ENTITY_CLASSES[device_type]
 
-        heating_enable_attrs = entity_class._heating_enable_attrs
-        if all(device_attrs.get(attr) is None for attr in heating_enable_attrs):
-            missing_attribute_warning.report(heating_enable_attrs, device_attrs)
+        required = entity_class._discovery_attrs
+        if required and all(device_attrs.get(attr) is None for attr in required):
+            missing_attribute_warning.report(required, device_attrs)
             return
 
         _LOGGER.debug("New %s climate found", device_type.value)
@@ -105,6 +105,9 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
     _temperature_attrs: tuple[str, ...] = ()
     # The attributes read back as the heating on/off state, in priority order.
     _heating_enable_attrs: tuple[str, ...]
+    # The entity is created once any of these is reported; empty means as soon
+    # as the device sends anything.
+    _discovery_attrs: tuple[str, ...]
 
     def _heating_enabled_value(self) -> Any:
         """Return the current heating enable value from known API variants."""
@@ -159,13 +162,16 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         return SUPPORTED_HVAC_MODES
 
     @property
-    def hvac_mode(self) -> HVACMode:
+    def hvac_mode(self) -> HVACMode | None:
         """
         Return currently selected HVAC operation mode.
         """
 
         # TODO whether support HVACMode.AUTO
-        if self._heating_enabled_value() == 1:
+        value = self._heating_enabled_value()
+        if value is None:
+            return None
+        if value == 1:
             return HVACMode.HEAT
 
         return HVACMode.OFF
@@ -244,6 +250,9 @@ class VaillantVSmartClimate(VaillantClimate):
     # It reports both. `Enabled_Heating` follows changes made at the thermostat
     # or in the app; `Heating_Enable` is the one written.
     _heating_enable_attrs = ("Enabled_Heating", "Heating_Enable")
+    # Unrecognised devices fall back to this class, so it is only created once
+    # the device shows it has heating to control.
+    _discovery_attrs = _heating_enable_attrs
 
     @property
     def supported_features(self) -> int:
@@ -282,6 +291,10 @@ class VaillantGatewayClimate(VaillantClimate):
     _setpoint_attr = "Flow_Temperature_Setpoint"
     # It reports only `Heating_Enable`.
     _heating_enable_attrs = ("Heating_Enable",)
+    # The device list already says it is a gateway, which controls central
+    # heating, so it does not wait for an attribute: the mode shows as unknown
+    # until `Heating_Enable` arrives.
+    _discovery_attrs = ()
     # eBUS setpoints have half-degree resolution.
     _attr_target_temperature_step = 0.5
     # The setpoint is a flow temperature, so the current temperature must be

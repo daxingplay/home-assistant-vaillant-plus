@@ -304,6 +304,62 @@ async def test_setup_creates_the_entity_for_the_resolved_family(
     assert isinstance(added[0], VaillantGatewayClimate)
 
 
+async def _setup_climate(hass, device_api_client, platform):
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.vaillant_plus.climate import async_setup_entry
+    from custom_components.vaillant_plus.const import API_CLIENT, DISPATCHERS, DOMAIN
+
+    entry = MockConfigEntry(domain=DOMAIN, data={"did": "1"}, entry_id="1")
+    entry.add_to_hass(hass)
+    hass.data.setdefault(DOMAIN, {API_CLIENT: {}, DISPATCHERS: {}})
+    hass.data[DOMAIN][API_CLIENT][entry.entry_id] = device_api_client
+    hass.data[DOMAIN][DISPATCHERS]["1"] = []
+    device_api_client._device.platform = platform
+
+    added = []
+    await async_setup_entry(hass, entry, added.extend)
+    return added
+
+
+async def _connect(hass, device_api_client, attrs):
+    from homeassistant.helpers.dispatcher import async_dispatcher_send
+
+    from custom_components.vaillant_plus.const import EVT_DEVICE_CONNECTED
+
+    device_api_client._device_attrs = dict(attrs)
+    async_dispatcher_send(hass, EVT_DEVICE_CONNECTED.format("1"), dict(attrs))
+    await hass.async_block_till_done()
+
+
+async def test_gateway_climate_does_not_wait_for_heating_enable(
+    hass, device_api_client
+):
+    """The device list identifies a gateway, so the first frame is enough;
+    the mode is unknown rather than OFF until `Heating_Enable` arrives."""
+    added = await _setup_climate(hass, device_api_client, platform=1)
+
+    await _connect(hass, device_api_client, {"Flow_Temperature_Setpoint": 45})
+
+    assert len(added) == 1
+    assert isinstance(added[0], VaillantGatewayClimate)
+    assert added[0].hvac_mode is None
+
+
+async def test_vsmart_climate_waits_for_a_heating_state(hass, device_api_client):
+    """Unrecognised devices fall back to vSMART, so it still needs evidence."""
+    added = await _setup_climate(hass, device_api_client, platform=0)
+
+    await _connect(hass, device_api_client, {"Room_Temperature": 21})
+    assert added == []
+
+    await _connect(
+        hass, device_api_client, {"Room_Temperature": 21, "Enabled_Heating": 1}
+    )
+    assert len(added) == 1
+    assert isinstance(added[0], VaillantVSmartClimate)
+
+
 async def test_vsmart_turn_off_is_applied_optimistically_with_both_enable_attrs(
     hass, device_api_client
 ):
