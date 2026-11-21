@@ -1,7 +1,7 @@
 # Changelog
 
 <!--next-version-placeholder-->
-## Unreleased
+## v1.5.1 (2026-11-21)
 * **Diagnostics no longer expose a familyCONNECT gateway's Wi-Fi name, home network address, serial numbers or location code.** The gateway reports these as device attributes, several of them hex-encoded, so they were included as-is. If you have posted a gateway diagnostics file in a public issue, consider editing it to remove the `WiFi_SSID`, `WiFi_IP`, `gateway_sn`, `device_sn`, `device_serial_number`, `traceability_number`, `Gateway_traceability_number` and `location_group` values. Found and fixed by [@Archie87](https://github.com/Archie87) in #62.
 
 ## v1.5.0 (2026-11-21)
