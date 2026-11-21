@@ -43,6 +43,10 @@ SUPPORTED_PRESET_MODES = [PRESET_COMFORT]
 # also the one the entity writes.
 HEATING_ENABLE_ATTRS = ("Enabled_Heating", "Heating_Enable")
 
+# `burn_status` while the burner fires for central heating: Vaillant status
+# code S.4. Hot water (S.14), pump/fan overrun and anti-cycling are not.
+BURN_STATUS_HEATING = 4
+
 # The central heating range a gateway falls back to. A gateway with a boiler
 # bound reports the boiler's own `Lower/Upper_Limitation_of_CH_Setpoint`
 # (30-60 °C on a turboTEC plus), which takes precedence; one without a boiler
@@ -286,6 +290,27 @@ class VaillantGatewayClimate(VaillantClimate):
     # entity then shows no current temperature rather than the wrong one.
     # The room reading stays available as its own sensor.
     _temperature_attrs = ("Flow_temperature",)
+
+    @property
+    def hvac_action(self) -> HVACAction:
+        """Return whether the burner is heating, from its status code.
+
+        Comparing the flow temperature with its setpoint says nothing once the
+        room is warm: the burner stops, the water cools below the setpoint, and
+        the entity would claim to be heating all night. The comparison is only
+        a fallback for a gateway that reports no `burn_status`.
+        """
+        if self._heating_enabled_value() in (0, False):
+            return HVACAction.OFF
+
+        try:
+            burn_status = int(self.get_device_attr("burn_status"))
+        except (TypeError, ValueError):
+            return super().hvac_action
+
+        if burn_status == BURN_STATUS_HEATING:
+            return HVACAction.HEATING
+        return HVACAction.IDLE
 
     @property
     def min_temp(self) -> float:

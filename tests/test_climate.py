@@ -421,3 +421,52 @@ async def test_gateway_reads_only_heating_enable(hass, device_api_client):
     climate = VaillantGatewayClimate(device_api_client)
 
     assert climate.hvac_mode == HVACMode.OFF
+
+
+@pytest.mark.parametrize(
+    ("burn_status", "action"),
+    [
+        (4, HVACAction.HEATING),  # S.4: burner on, central heating
+        ("4", HVACAction.HEATING),
+        (14, HVACAction.IDLE),  # S.14: burner on, hot water
+        (7, HVACAction.IDLE),  # S.7: pump overrun
+        (8, HVACAction.IDLE),  # S.8: anti-cycling
+        (30, HVACAction.IDLE),  # S.30: room thermostat blocks heating
+    ],
+)
+async def test_gateway_heating_action_follows_the_burner(
+    hass, device_api_client, burn_status, action
+):
+    """The flow cools below its setpoint whenever the burner rests, so the
+    status code decides, not the temperatures. Codes as observed in #62."""
+    device_api_client._device_attrs = {
+        **GATEWAY_ATTRS,
+        "Heating_Enable": 1,
+        "Flow_temperature": 25,
+        "burn_status": burn_status,
+    }
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.hvac_action == action
+
+
+async def test_gateway_without_burn_status_compares_temperatures(
+    hass, device_api_client
+):
+    attrs = {**GATEWAY_ATTRS, "Heating_Enable": 1, "Flow_temperature": 25}
+    attrs.pop("burn_status", None)
+    device_api_client._device_attrs = attrs
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.hvac_action == HVACAction.HEATING
+
+
+async def test_gateway_heating_off_ignores_the_burner(hass, device_api_client):
+    device_api_client._device_attrs = {
+        **GATEWAY_ATTRS,
+        "Heating_Enable": 0,
+        "burn_status": 4,
+    }
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.hvac_action == HVACAction.OFF
