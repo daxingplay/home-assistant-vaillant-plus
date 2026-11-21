@@ -1,6 +1,7 @@
 """Vaillant sensors."""
 from __future__ import annotations
 
+import dataclasses
 import logging
 from typing import Any
 
@@ -17,12 +18,22 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfPressure,
     UnitOfTemperature,
+    UnitOfVolume,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client import VaillantClient
-from .const import CONF_DID, DOMAIN, API_CLIENT
+from .const import (
+    API_CLIENT,
+    CONF_DID,
+    CONF_GAS_CALORIFIC_VALUE,
+    CONF_GAS_UNIT,
+    DEFAULT_GAS_CALORIFIC_VALUE,
+    DEFAULT_GAS_UNIT,
+    DOMAIN,
+    GAS_UNIT_CUBIC_METERS,
+)
 from .discovery import async_register_discovery
 from .entity import VaillantEntity
 from .utils import decode_gas_consumption
@@ -493,6 +504,16 @@ def _attribute(description: SensorEntityDescription) -> str:
     return description.key
 
 
+def _in_cubic_meters(description: SensorEntityDescription) -> SensorEntityDescription:
+    """Return a decoded gas description that reports m³ instead of kWh."""
+    return dataclasses.replace(
+        description,
+        device_class=SensorDeviceClass.GAS,
+        native_unit_of_measurement=UnitOfVolume.CUBIC_METERS,
+        suggested_display_precision=2,
+    )
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> bool:
@@ -501,6 +522,12 @@ async def async_setup_entry(
     client: VaillantClient = hass.data[DOMAIN][API_CLIENT][
         entry.entry_id
     ]
+
+    kwh_per_cubic_meter: float | None = None
+    if entry.options.get(CONF_GAS_UNIT, DEFAULT_GAS_UNIT) == GAS_UNIT_CUBIC_METERS:
+        kwh_per_cubic_meter = entry.options.get(
+            CONF_GAS_CALORIFIC_VALUE, DEFAULT_GAS_CALORIFIC_VALUE
+        )
 
     added_entities = []
 
@@ -513,7 +540,16 @@ async def async_setup_entry(
                 _attribute(description) in device_attrs
                 and description.key not in added_entities
             ):
-                new_entities.append(VaillantSensorEntity(client, description))
+                if (
+                    kwh_per_cubic_meter is not None
+                    and description.key in GAS_CONSUMPTION_KEYS
+                ):
+                    entity = VaillantSensorEntity(
+                        client, _in_cubic_meters(description), kwh_per_cubic_meter
+                    )
+                else:
+                    entity = VaillantSensorEntity(client, description)
+                new_entities.append(entity)
                 added_entities.append(description.key)
 
         if len(new_entities) > 0:
@@ -535,10 +571,12 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
         self,
         client: VaillantClient,
         description: SensorEntityDescription,
+        kwh_per_cubic_meter: float | None = None,
     ):
         super().__init__(client)
         self.entity_description = description
         self._attribute = _attribute(description)
+        self._kwh_per_cubic_meter = kwh_per_cubic_meter
 
     @property
     def unique_id(self) -> str | None:
@@ -555,4 +593,6 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
         self._attr_available = value is not None
         if self.entity_description.key in GAS_CONSUMPTION_KEYS:
             value = decode_gas_consumption(value)
+            if value is not None and self._kwh_per_cubic_meter:
+                value /= self._kwh_per_cubic_meter
         self._attr_native_value = value

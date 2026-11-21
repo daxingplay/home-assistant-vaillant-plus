@@ -26,6 +26,22 @@
             }
         }
     },
+    "options": {
+        "step": {
+            "init": {
+                "title": "燃气消耗",
+                "description": "壁挂炉以能量上报燃气消耗。如需以体积显示，请选择 m³ 并填写燃气热值（可在燃气账单上找到）。",
+                "data": {
+                    "gas_unit": "单位",
+                    "gas_calorific_value": "热值（kWh/m³）"
+                },
+                "data_description": {
+                    "gas_unit": "更改单位后，燃气传感器的长期统计会重新开始；Home Assistant 会在“开发者工具 → 统计”中询问如何处理旧数据。",
+                    "gas_calorific_value": "天然气通常为 9.5–10.5 kWh/m³。如热值单位为 MJ/m³，除以 3.6 即可。"
+                }
+            }
+        }
+    },
     "entity": {
         "sensor": {
             "burn_status": {

@@ -26,6 +26,22 @@
             }
         }
     },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Gas consumption",
+                "description": "The boiler reports gas use as energy. To show it as a volume instead, choose m³ and enter your gas's calorific value, which is printed on the gas bill.",
+                "data": {
+                    "gas_unit": "Unit",
+                    "gas_calorific_value": "Calorific value (kWh/m³)"
+                },
+                "data_description": {
+                    "gas_unit": "Changing the unit starts new long-term statistics for the gas sensors; Home Assistant asks how to handle the old ones under Developer tools → Statistics.",
+                    "gas_calorific_value": "Natural gas is usually 9.5–10.5 kWh/m³. To convert from MJ/m³, divide by 3.6."
+                }
+            }
+        }
+    },
     "entity": {
         "sensor": {
             "burn_status": {
