@@ -27,6 +27,7 @@ PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.SENSOR,
     Platform.WATER_HEATER,
+    Platform.NUMBER,
 ]
 
 # This integration can only be configured through the config flow (UI).

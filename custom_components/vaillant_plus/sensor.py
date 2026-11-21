@@ -26,6 +26,7 @@ from .client import VaillantClient
 from .const import CONF_DID, DOMAIN, API_CLIENT
 from .discovery import async_register_discovery
 from .entity import VaillantEntity
+from .number import has_no_room_sensor
 from .utils import decode_gas_consumption, valid_temperature
 
 _LOGGER = logging.getLogger(__name__)
@@ -571,6 +572,11 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
         """Return a unique ID."""
         return f"{self.device.id}_{self.entity_description.key}"
 
+    def _no_room_sensor(self) -> bool:
+        platform = getattr(self, "platform", None)
+        entry = getattr(platform, "config_entry", None) if platform else None
+        return entry is not None and has_no_room_sensor(entry)
+
     @callback
     def update_from_latest_data(self, data: dict[str, Any]) -> None:
         """Update the entity from the latest data."""
@@ -578,7 +584,10 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
             return
 
         value = data.get(self._attribute)
-        if self.entity_description.device_class == SensorDeviceClass.TEMPERATURE:
+        if self._attribute == "indoor_temperature" and self._no_room_sensor():
+            # The value is the setting offered by the number entity.
+            value = None
+        elif self.entity_description.device_class == SensorDeviceClass.TEMPERATURE:
             value = valid_temperature(value)
         elif self.entity_description.native_unit_of_measurement == PERCENTAGE:
             # Out-of-range values (such as 255) mean "not available"

@@ -266,6 +266,11 @@
                     "off": "关闭"
                 }
             }
+        },
+        "number": {
+            "indoor_temperature_setting": {
+                "name": "室内温度设定"
+            }
         }
     }
 }
