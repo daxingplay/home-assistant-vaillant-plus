@@ -11,12 +11,10 @@ from .const import API_CLIENT, CONF_DID, DOMAIN
 
 REDACTED = "**REDACTED**"
 
-# Config entry keys and device fields that identify the account or the
-# hardware. Device attributes themselves are kept as-is: they are what makes a
-# diagnostics download useful when triaging an unsupported gateway.
-# `device_sn` is deliberately not listed: like `mac` and `serial_number` it
-# identifies the unit rather than the product, so it is left out of the device
-# dump entirely rather than included and redacted.
+# Keys that identify the account, the hardware or the home. Device attributes
+# are otherwise kept as-is: they are what makes a diagnostics download useful
+# when triaging an unsupported gateway. The device's own serial number and MAC
+# are left out of the device section entirely rather than redacted.
 TO_REDACT = {
     "access_token",
     "did",
@@ -27,6 +25,18 @@ TO_REDACT = {
     "token",
     "uid",
     "username",
+    # Reported by a familyCONNECT gateway as device attributes. Several are
+    # hex-encoded ASCII, so they do not look sensitive, but they decode to the
+    # home's Wi-Fi name, its LAN address and per-unit serial numbers.
+    # `location_group` is the weather location code of the home.
+    "WiFi_SSID",
+    "WiFi_IP",
+    "gateway_sn",
+    "device_sn",
+    "device_serial_number",
+    "traceability_number",
+    "Gateway_traceability_number",
+    "location_group",
 }
 
 
