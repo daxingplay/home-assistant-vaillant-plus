@@ -80,6 +80,9 @@ jobs:
           - python-version: "3.14"
             # Home Assistant 2026.10.2, reported in issue #66
             pytest-homeassistant-custom-component-version: 0.13.373
+          - python-version: "3.14"
+            # Home Assistant 2026.10.4
+            pytest-homeassistant-custom-component-version: 0.13.375
     steps:
       - name: Check out code from GitHub
         uses: "actions/checkout@v7"
