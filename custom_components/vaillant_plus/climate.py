@@ -38,11 +38,6 @@ BASE_FEATURES = (
 SUPPORTED_HVAC_MODES = [HVACMode.HEAT, HVACMode.OFF]
 SUPPORTED_PRESET_MODES = [PRESET_COMFORT]
 
-# The attributes carrying the heating on/off state, in the order a vSMART
-# reads them. A vSMART reports both, a gateway only `Heating_Enable`, which is
-# also the one the entity writes.
-HEATING_ENABLE_ATTRS = ("Enabled_Heating", "Heating_Enable")
-
 # `burn_status` while the burner fires for central heating: Vaillant status
 # code S.4. Hot water (S.14), pump/fan overrun and anti-cycling are not.
 BURN_STATUS_HEATING = 4
@@ -74,12 +69,13 @@ async def async_setup_entry(
             _LOGGER.debug("Already added climate device. skip.")
             return
 
-        if all(device_attrs.get(attr) is None for attr in HEATING_ENABLE_ATTRS):
-            missing_attribute_warning.report(HEATING_ENABLE_ATTRS, device_attrs)
-            return
-
         device_type = resolve_device_type(client.device)
         entity_class = _ENTITY_CLASSES[device_type]
+
+        heating_enable_attrs = entity_class._heating_enable_attrs
+        if all(device_attrs.get(attr) is None for attr in heating_enable_attrs):
+            missing_attribute_warning.report(heating_enable_attrs, device_attrs)
+            return
 
         _LOGGER.debug("New %s climate found", device_type.value)
         added_entities.append("climate")
@@ -108,7 +104,7 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
     # The attributes read back as the current temperature, in priority order.
     _temperature_attrs: tuple[str, ...] = ()
     # The attributes read back as the heating on/off state, in priority order.
-    _heating_enable_attrs: tuple[str, ...] = HEATING_ENABLE_ATTRS
+    _heating_enable_attrs: tuple[str, ...]
 
     def _heating_enabled_value(self) -> Any:
         """Return the current heating enable value from known API variants."""
@@ -245,6 +241,9 @@ class VaillantVSmartClimate(VaillantClimate):
 
     _setpoint_attr = "Room_Temperature_Setpoint_Comfort"
     _temperature_attrs = ("Room_Temperature",)
+    # It reports both. `Enabled_Heating` follows changes made at the thermostat
+    # or in the app; `Heating_Enable` is the one written.
+    _heating_enable_attrs = ("Enabled_Heating", "Heating_Enable")
 
     @property
     def supported_features(self) -> int:
