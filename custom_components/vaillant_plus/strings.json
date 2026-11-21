@@ -260,6 +260,11 @@
           "off": "Off"
         }
       }
+    },
+    "number": {
+      "indoor_temperature_setting": {
+        "name": "Indoor temperature setting"
+      }
     }
   }
 }

@@ -38,11 +38,9 @@ BASE_FEATURES = (
 SUPPORTED_HVAC_MODES = [HVACMode.HEAT, HVACMode.OFF]
 SUPPORTED_PRESET_MODES = [PRESET_COMFORT]
 
-# A vSMART reports both; a gateway reports only `Heating_Enable`. That is
-# also the one the entity writes, so it is read first: otherwise the
-# optimistic update after turning the heating off is shadowed by
-# `Enabled_Heating` until the cloud echoes the change.
-HEATING_ENABLE_ATTRS = ("Heating_Enable", "Enabled_Heating")
+# `burn_status` while the burner fires for central heating: Vaillant status
+# code S.4. Hot water (S.14), pump/fan overrun and anti-cycling are not.
+BURN_STATUS_HEATING = 4
 
 # The central heating range a gateway falls back to. A gateway with a boiler
 # bound reports the boiler's own `Lower/Upper_Limitation_of_CH_Setpoint`
@@ -71,12 +69,13 @@ async def async_setup_entry(
             _LOGGER.debug("Already added climate device. skip.")
             return
 
-        if all(device_attrs.get(attr) is None for attr in HEATING_ENABLE_ATTRS):
-            missing_attribute_warning.report(HEATING_ENABLE_ATTRS, device_attrs)
-            return
-
         device_type = resolve_device_type(client.device)
         entity_class = _ENTITY_CLASSES[device_type]
+
+        required = entity_class._discovery_attrs
+        if required and all(device_attrs.get(attr) is None for attr in required):
+            missing_attribute_warning.report(required, device_attrs)
+            return
 
         _LOGGER.debug("New %s climate found", device_type.value)
         added_entities.append("climate")
@@ -104,10 +103,15 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
     _setpoint_attr: str
     # The attributes read back as the current temperature, in priority order.
     _temperature_attrs: tuple[str, ...] = ()
+    # The attributes read back as the heating on/off state, in priority order.
+    _heating_enable_attrs: tuple[str, ...]
+    # The entity is created once any of these is reported; empty means as soon
+    # as the device sends anything.
+    _discovery_attrs: tuple[str, ...]
 
     def _heating_enabled_value(self) -> Any:
         """Return the current heating enable value from known API variants."""
-        for attr in HEATING_ENABLE_ATTRS:
+        for attr in self._heating_enable_attrs:
             value = self.get_device_attr(attr)
             if value is not None:
                 return value
@@ -158,13 +162,16 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
         return SUPPORTED_HVAC_MODES
 
     @property
-    def hvac_mode(self) -> HVACMode:
+    def hvac_mode(self) -> HVACMode | None:
         """
         Return currently selected HVAC operation mode.
         """
 
         # TODO whether support HVACMode.AUTO
-        if self._heating_enabled_value() == 1:
+        value = self._heating_enabled_value()
+        if value is None:
+            return None
+        if value == 1:
             return HVACMode.HEAT
 
         return HVACMode.OFF
@@ -194,12 +201,26 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
 
         if hvac_mode == HVACMode.OFF:
             await self.send_commands({"Heating_Enable": False})
+            self._mirror_heating_enable(False)
         elif hvac_mode == HVACMode.HEAT:
             # Both families report Mode_Setting_CH: "Cruising", so both get it.
             await self.send_commands({
                 "Heating_Enable": True,
                 "Mode_Setting_CH": "Cruising",
             })
+            self._mirror_heating_enable(True)
+
+    def _mirror_heating_enable(self, enabled: bool) -> None:
+        """Apply a written `Heating_Enable` to the other state attributes too.
+
+        A vSMART's state is read from `Enabled_Heating`, which the cloud only
+        updates once the device has acted on the change. Until then the mode
+        would snap back, so mirror the value locally; the next push from the
+        cloud replaces it either way.
+        """
+        for attr in self._heating_enable_attrs:
+            if attr != "Heating_Enable" and self.get_device_attr(attr) is not None:
+                self.set_optimistic_value(attr, int(enabled))
 
     async def async_turn_on(self) -> None:
         """Turn the central heating on."""
@@ -226,6 +247,12 @@ class VaillantVSmartClimate(VaillantClimate):
 
     _setpoint_attr = "Room_Temperature_Setpoint_Comfort"
     _temperature_attrs = ("Room_Temperature",)
+    # It reports both. `Enabled_Heating` follows changes made at the thermostat
+    # or in the app; `Heating_Enable` is the one written.
+    _heating_enable_attrs = ("Enabled_Heating", "Heating_Enable")
+    # Unrecognised devices fall back to this class, so it is only created once
+    # the device shows it has heating to control.
+    _discovery_attrs = _heating_enable_attrs
 
     @property
     def supported_features(self) -> int:
@@ -262,6 +289,14 @@ class VaillantGatewayClimate(VaillantClimate):
     """
 
     _setpoint_attr = "Flow_Temperature_Setpoint"
+    # It reports only `Heating_Enable`.
+    _heating_enable_attrs = ("Heating_Enable",)
+    # The device list already says it is a gateway, which controls central
+    # heating, so it does not wait for an attribute: the mode shows as unknown
+    # until `Heating_Enable` arrives.
+    _discovery_attrs = ()
+    # eBUS setpoints have half-degree resolution.
+    _attr_target_temperature_step = 0.5
     # The setpoint is a flow temperature, so the current temperature must be
     # one too: comparing the room (`indoor_temperature`, ~21 °C) against a
     # 45 °C flow setpoint made the heating always look like it was running.
@@ -269,6 +304,27 @@ class VaillantGatewayClimate(VaillantClimate):
     # entity then shows no current temperature rather than the wrong one.
     # The room reading stays available as its own sensor.
     _temperature_attrs = ("Flow_temperature",)
+
+    @property
+    def hvac_action(self) -> HVACAction:
+        """Return whether the burner is heating, from its status code.
+
+        Comparing the flow temperature with its setpoint says nothing once the
+        room is warm: the burner stops, the water cools below the setpoint, and
+        the entity would claim to be heating all night. The comparison is only
+        a fallback for a gateway that reports no `burn_status`.
+        """
+        if self._heating_enabled_value() in (0, False):
+            return HVACAction.OFF
+
+        try:
+            burn_status = int(self.get_device_attr("burn_status"))
+        except (TypeError, ValueError):
+            return super().hvac_action
+
+        if burn_status == BURN_STATUS_HEATING:
+            return HVACAction.HEATING
+        return HVACAction.IDLE
 
     @property
     def min_temp(self) -> float:

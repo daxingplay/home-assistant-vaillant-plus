@@ -27,6 +27,7 @@ PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.SENSOR,
     Platform.WATER_HEATER,
+    Platform.NUMBER,
 ]
 
 # This integration can only be configured through the config flow (UI).
@@ -73,7 +74,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unsub_stop = hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, close_client)
     hass.data[DOMAIN][DISPATCHERS][device_id].append(unsub_stop)
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    try:
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    except Exception:
+        # The client listens for this account's token updates from the moment
+        # it is created; a failed setup must not leave it behind, still
+        # adopting tokens, for every retry.
+        await client.close()
+        raise
 
     task = hass.loop.create_task(client.start())
     hass.data[DOMAIN][DISPATCHERS][device_id].append(task)
