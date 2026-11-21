@@ -28,11 +28,19 @@ def test_binary_sensor_bit_fields_accept_integer_values():
     assert 'str(value).startswith("1")' in source
 
 
-def test_climate_accepts_current_heating_enable_attribute():
-    """Current China gateway payloads may expose Heating_Enable only."""
-    from custom_components.vaillant_plus.climate import HEATING_ENABLE_ATTRS
+def test_climate_reads_heating_state_per_device_family():
+    """A vSMART reports both attributes and follows `Enabled_Heating`; a
+    gateway reports `Heating_Enable` only."""
+    from custom_components.vaillant_plus.climate import (
+        VaillantGatewayClimate,
+        VaillantVSmartClimate,
+    )
 
-    assert set(HEATING_ENABLE_ATTRS) == {"Enabled_Heating", "Heating_Enable"}
+    assert VaillantVSmartClimate._heating_enable_attrs == (
+        "Enabled_Heating",
+        "Heating_Enable",
+    )
+    assert VaillantGatewayClimate._heating_enable_attrs == ("Heating_Enable",)
 
 
 def test_client_merges_partial_device_updates():

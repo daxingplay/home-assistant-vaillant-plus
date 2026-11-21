@@ -582,7 +582,11 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
             value = valid_temperature(value)
         elif self.entity_description.native_unit_of_measurement == PERCENTAGE:
             # Out-of-range values (such as 255) mean "not available"
-            if not isinstance(value, (int, float)) or not 0 <= value <= 100:
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not 0 <= value <= 100
+            ):
                 value = None
         self._attr_available = value is not None
         if self.entity_description.key in GAS_CONSUMPTION_KEYS:

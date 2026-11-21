@@ -309,8 +309,9 @@ async def test_vsmart_turn_off_is_applied_optimistically_with_both_enable_attrs(
 ):
     """A real vSMART reports both `Heating_Enable` and `Enabled_Heating`.
 
-    Only `Heating_Enable` is written, so the mode must be read from it first,
-    or turning the heating off snaps back to HEAT until the cloud echoes.
+    Only `Heating_Enable` is written, but the state is read from
+    `Enabled_Heating`, so the written value is mirrored to it locally: without
+    that, turning the heating off snaps back to HEAT until the cloud echoes.
     """
     device_api_client._device_attrs = {
         "Heating_Enable": 1,
@@ -380,3 +381,99 @@ async def test_gateway_uses_the_central_heating_limits_it_reports(
     # Sentinels or no limits at all: the fixed range applies.
     device_api_client._device_attrs["Upper_Limitation_of_CH_Setpoint"] = 127.5
     assert climate.max_temp == 75.0
+
+
+@pytest.mark.parametrize("enabled", [0, 1])
+async def test_vsmart_follows_enabled_heating_changed_elsewhere(
+    hass, device_api_client, enabled
+):
+    """A change made at the thermostat or in the app may update only
+    `Enabled_Heating`, leaving the last written `Heating_Enable` behind."""
+    device_api_client._device_attrs = {
+        "Heating_Enable": 1 - enabled,
+        "Enabled_Heating": enabled,
+        "Room_Temperature": 20.5,
+        "Room_Temperature_Setpoint_Comfort": 22,
+    }
+    climate = VaillantVSmartClimate(device_api_client)
+
+    assert climate.hvac_mode == (HVACMode.HEAT if enabled else HVACMode.OFF)
+
+
+async def test_vsmart_turn_on_is_mirrored_to_enabled_heating(hass, device_api_client):
+    device_api_client._device_attrs = {
+        "Heating_Enable": 0,
+        "Enabled_Heating": 0,
+        "Room_Temperature": 20.5,
+        "Room_Temperature_Setpoint_Comfort": 22,
+    }
+    climate = VaillantVSmartClimate(device_api_client)
+
+    with patch("custom_components.vaillant_plus.VaillantClient.control_device"):
+        await climate.async_turn_on()
+
+    assert climate.hvac_mode == HVACMode.HEAT
+    assert device_api_client.device_attrs["Enabled_Heating"] == 1
+
+
+async def test_gateway_reads_only_heating_enable(hass, device_api_client):
+    device_api_client._device_attrs = {**GATEWAY_ATTRS, "Heating_Enable": 0}
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.hvac_mode == HVACMode.OFF
+
+
+@pytest.mark.parametrize(
+    ("burn_status", "action"),
+    [
+        (4, HVACAction.HEATING),  # S.4: burner on, central heating
+        ("4", HVACAction.HEATING),
+        (14, HVACAction.IDLE),  # S.14: burner on, hot water
+        (7, HVACAction.IDLE),  # S.7: pump overrun
+        (8, HVACAction.IDLE),  # S.8: anti-cycling
+        (30, HVACAction.IDLE),  # S.30: room thermostat blocks heating
+    ],
+)
+async def test_gateway_heating_action_follows_the_burner(
+    hass, device_api_client, burn_status, action
+):
+    """The flow cools below its setpoint whenever the burner rests, so the
+    status code decides, not the temperatures. Codes as observed in #62."""
+    device_api_client._device_attrs = {
+        **GATEWAY_ATTRS,
+        "Heating_Enable": 1,
+        "Flow_temperature": 25,
+        "burn_status": burn_status,
+    }
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.hvac_action == action
+
+
+async def test_gateway_without_burn_status_compares_temperatures(
+    hass, device_api_client
+):
+    attrs = {**GATEWAY_ATTRS, "Heating_Enable": 1, "Flow_temperature": 25}
+    attrs.pop("burn_status", None)
+    device_api_client._device_attrs = attrs
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.hvac_action == HVACAction.HEATING
+
+
+async def test_gateway_heating_off_ignores_the_burner(hass, device_api_client):
+    device_api_client._device_attrs = {
+        **GATEWAY_ATTRS,
+        "Heating_Enable": 0,
+        "burn_status": 4,
+    }
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.hvac_action == HVACAction.OFF
+
+
+async def test_gateway_setpoint_moves_in_half_degrees(hass, device_api_client):
+    device_api_client._device_attrs = dict(GATEWAY_ATTRS)
+    climate = VaillantGatewayClimate(device_api_client)
+
+    assert climate.target_temperature_step == 0.5

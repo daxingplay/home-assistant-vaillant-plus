@@ -120,3 +120,80 @@ async def test_close_stops_listening_for_token_updates(hass, device_api_client):
     await hass.async_block_till_done()
 
     assert device_api_client._token.access_token == "old"
+
+
+async def test_entries_rejected_at_the_same_moment_log_in_once(
+    hass, device_api_client
+):
+    """Typically at startup: both entries load the same expired stored token.
+
+    Neither has seen a newer token when its request fails, so without
+    serialising the logins both would log in, and the second login would
+    invalidate the token the first one had just obtained.
+    """
+    import asyncio
+
+    from custom_components.vaillant_plus.client import VaillantClient
+
+    first = device_api_client
+    first._token = _token("t1")
+    with patch(
+        "custom_components.vaillant_plus.utils.get_aiohttp_session"
+    ), patch("custom_components.vaillant_plus.client.VaillantApiClient"):
+        second = VaillantClient(hass, _token("t1"), "2")
+
+    async def slow_login(*_):
+        await asyncio.sleep(0.01)
+        return _token("t2")
+
+    try:
+        first._api_client.login = AsyncMock(side_effect=slow_login)
+        second._api_client.login = AsyncMock(side_effect=slow_login)
+
+        await asyncio.gather(
+            first._get_token(_token("t1")), second._get_token(_token("t1"))
+        )
+
+        logins = (
+            first._api_client.login.await_count + second._api_client.login.await_count
+        )
+        assert logins == 1
+        assert first._token.access_token == "t2"
+        assert second._token.access_token == "t2"
+    finally:
+        await second.close()
+
+
+async def test_failed_setup_closes_its_client(hass, bypass_login, bypass_get_device):
+    """A setup that fails after the client is built must not leave it
+    subscribed: every retry would add another client adopting tokens."""
+    from homeassistant.config_entries import ConfigEntryState
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.vaillant_plus import async_setup
+    from custom_components.vaillant_plus.client import VaillantClient
+    from custom_components.vaillant_plus.const import DOMAIN
+
+    from .const import MOCK_CONFIG_ENTRY_DATA, MOCK_DID
+
+    entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG_ENTRY_DATA, entry_id=MOCK_DID)
+    entry.add_to_hass(hass)
+    closed = []
+    real_close = VaillantClient.close
+
+    async def record_close(self):
+        closed.append(self)
+        await real_close(self)
+
+    with patch.object(VaillantClient, "close", record_close), patch.object(
+        hass.config_entries,
+        "async_forward_entry_setups",
+        side_effect=RuntimeError("platform setup failed"),
+    ):
+        assert await async_setup(hass, {})
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.SETUP_ERROR
+    assert len(closed) == 1
+    assert closed[0]._unsub_token_update is None
