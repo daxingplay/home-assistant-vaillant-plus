@@ -11,7 +11,7 @@ def test_sensor_entities_ignore_partial_updates_without_their_key():
     """Sensor update handlers should keep state when an update omits their key."""
     source = (ROOT / "custom_components/vaillant_plus/sensor.py").read_text()
 
-    assert "if self.entity_description.key not in data:" in source
+    assert "if self._attribute not in data:" in source
 
 
 def test_binary_sensor_entities_ignore_partial_updates_without_their_key():

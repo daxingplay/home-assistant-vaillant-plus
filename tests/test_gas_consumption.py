@@ -75,3 +75,66 @@ async def test_entity_reports_decoded_kwh(hass):
 
     assert entity.available
     assert entity.native_value == pytest.approx(97_863 / 3600)
+
+
+def test_each_gas_attribute_has_a_hidden_raw_sensor():
+    from homeassistant.const import EntityCategory
+
+    from custom_components.vaillant_plus.sensor import (
+        GAS_CONSUMPTION_KEYS,
+        SENSOR_DESCRIPTIONS,
+    )
+
+    raw = {d.key: d for d in SENSOR_DESCRIPTIONS if d.key.endswith("_raw")}
+    assert set(raw) == {f"{key}_raw" for key in GAS_CONSUMPTION_KEYS}
+
+    for description in raw.values():
+        assert description.entity_registry_visible_default is False
+        assert description.entity_registry_enabled_default is True
+        assert description.entity_category is EntityCategory.DIAGNOSTIC
+        assert description.device_class is None
+        assert description.native_unit_of_measurement is None
+
+
+async def test_raw_entity_reports_the_value_as_received(hass):
+    from unittest.mock import MagicMock
+
+    from custom_components.vaillant_plus.sensor import (
+        SENSOR_DESCRIPTIONS,
+        VaillantSensorEntity,
+    )
+
+    description = next(
+        d for d in SENSOR_DESCRIPTIONS if d.key == "gas_ch_consumption_today_raw"
+    )
+    client = MagicMock(is_connected=True)
+    client.device_attrs = {"gas_ch_consumption_today": "8023bf47"}
+    entity = VaillantSensorEntity(client, description)
+
+    entity.update_from_latest_data({"gas_ch_consumption_today": "8023bf47"})
+
+    assert entity.available
+    assert entity.native_value == "8023bf47"
+    assert entity.unique_id.endswith("_gas_ch_consumption_today_raw")
+
+
+async def test_both_sensors_are_created_from_one_attribute(hass):
+    from unittest.mock import MagicMock, patch
+
+    from custom_components.vaillant_plus import sensor
+
+    created = []
+    entry = MagicMock(entry_id="entry", data={"did": "device"})
+    hass.data.setdefault(sensor.DOMAIN, {})[sensor.API_CLIENT] = {
+        "entry": MagicMock()
+    }
+
+    with patch.object(sensor, "async_register_discovery") as register:
+        await sensor.async_setup_entry(hass, entry, created.extend)
+        discover = register.call_args.args[3]
+        discover({"gas_ch_consumption_today": "8023bf47"})
+
+    assert sorted(e.entity_description.key for e in created) == [
+        "gas_ch_consumption_today",
+        "gas_ch_consumption_today_raw",
+    ]
