@@ -7,6 +7,7 @@ from typing import Any
 
 from aiohttp import ClientError
 from homeassistant import config_entries
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from vaillant_plus_cn_api import (
     Device,
@@ -21,10 +22,16 @@ import voluptuous as vol
 from .utils import get_aiohttp_session
 from .const import (
     CONF_DID,
+    CONF_GAS_CALORIFIC_VALUE,
+    CONF_GAS_UNIT,
     CONF_PASSWORD,
     CONF_TOKEN,
     CONF_USERNAME,
+    DEFAULT_GAS_CALORIFIC_VALUE,
+    DEFAULT_GAS_UNIT,
     DOMAIN,
+    GAS_UNIT_CUBIC_METERS,
+    GAS_UNIT_KWH,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,6 +50,14 @@ class VaillantPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Vaillant Plus."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> VaillantPlusOptionsFlow:
+        """Return the options flow."""
+        return VaillantPlusOptionsFlow(config_entry)
 
     def __init__(self) -> None:
         """Initialize."""
@@ -154,3 +169,37 @@ class VaillantPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="select", data_schema=select_schema, errors=errors
         )
+
+
+class VaillantPlusOptionsFlow(config_entries.OptionsFlow):
+    """Let the user choose how gas consumption is reported."""
+
+    def __init__(self, entry: config_entries.ConfigEntry) -> None:
+        """Initialize."""
+        # Not `self.config_entry`: newer Home Assistant releases set that
+        # themselves and reject an assignment.
+        self._entry = entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Show and save the gas options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        options = self._entry.options
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_GAS_UNIT,
+                    default=options.get(CONF_GAS_UNIT, DEFAULT_GAS_UNIT),
+                ): vol.In({GAS_UNIT_KWH: "kWh", GAS_UNIT_CUBIC_METERS: "m³"}),
+                vol.Required(
+                    CONF_GAS_CALORIFIC_VALUE,
+                    default=options.get(
+                        CONF_GAS_CALORIFIC_VALUE, DEFAULT_GAS_CALORIFIC_VALUE
+                    ),
+                ): vol.All(vol.Coerce(float), vol.Range(min=1, max=50)),
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=schema)

@@ -73,6 +73,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unsub_stop = hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, close_client)
     hass.data[DOMAIN][DISPATCHERS][device_id].append(unsub_stop)
 
+    options = dict(entry.options)
+
+    async def reload_on_options_change(
+        hass: HomeAssistant, updated: ConfigEntry
+    ) -> None:
+        # Also called for every token refresh, which only changes `data`.
+        if dict(updated.options) != options:
+            await hass.config_entries.async_reload(updated.entry_id)
+
+    entry.async_on_unload(entry.add_update_listener(reload_on_options_change))
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     task = hass.loop.create_task(client.start())
