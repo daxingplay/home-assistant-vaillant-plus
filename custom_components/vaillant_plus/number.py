@@ -1,12 +1,10 @@
 """Vaillant number entities: settings that are not part of a climate.
 
-A gateway reports `indoor_temperature`. With a room sensor paired it is that
-sensor's reading, shown by the read-only sensor. Without one it reads 255, and
-the value is the indoor temperature weather compensation works with, which the
-Vaillant app lets the user set (issue #66). Once written it no longer reads
-255, so a setting cannot be told from a measurement by its value: the first
-255 is recorded in the config entry, and the device keeps the setting from
-then on.
+A gateway reports `indoor_temperature`: a paired room sensor's reading, or,
+without one, the indoor temperature weather compensation works with, which the
+Vaillant app lets the user set (issue #66). Which one a gateway has cannot be
+told from the value, so every gateway with a boiler gets the setting and the
+user decides whether to use it.
 """
 from __future__ import annotations
 
@@ -24,11 +22,11 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client import VaillantClient
-from .const import API_CLIENT, CONF_DID, CONF_NO_ROOM_SENSOR, DOMAIN
+from .const import API_CLIENT, CONF_DID, DOMAIN
 from .device import VaillantDeviceType, resolve_device_type
 from .discovery import async_register_discovery
 from .entity import VaillantEntity
-from .utils import TEMPERATURE_SENTINELS, valid_temperature
+from .utils import valid_temperature
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,11 +47,6 @@ NUMBER_DESCRIPTIONS = (
 )
 
 
-def has_no_room_sensor(entry: ConfigEntry) -> bool:
-    """Return whether this gateway was seen without a room sensor."""
-    return bool(entry.data.get(CONF_NO_ROOM_SENSOR))
-
-
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> bool:
@@ -72,21 +65,9 @@ async def async_setup_entry(
         if INDOOR_TEMPERATURE not in device_attrs:
             return
 
-        if not has_no_room_sensor(entry):
-            # With no boiler on the bus every reading is a sentinel, which says
-            # nothing about a room sensor.
-            if device_attrs.get("ebus_status") == 0:
-                return
-            if device_attrs[INDOOR_TEMPERATURE] not in TEMPERATURE_SENTINELS:
-                return
-            _LOGGER.info(
-                "Gateway %s reports no room sensor; offering its indoor"
-                " temperature as a setting",
-                device_id,
-            )
-            hass.config_entries.async_update_entry(
-                entry, data={**entry.data, CONF_NO_ROOM_SENSOR: True}
-            )
+        # Without a boiler on the bus there is nothing for it to act on.
+        if device_attrs.get("ebus_status") == 0:
+            return
 
         added_entities.append(INDOOR_TEMPERATURE)
         async_add_entities(

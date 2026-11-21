@@ -1,17 +1,17 @@
-"""The gateway's indoor temperature: a reading with a room sensor, a setting without.
+"""The gateway's indoor temperature setting.
 
-Without a room sensor the gateway reports `indoor_temperature` as 255 until
-the user sets it, and as the set value afterwards, so the first 255 is what
-says there is no sensor. It is kept in the config entry because the value
-alone can never say so again.
+`indoor_temperature` is a paired room sensor's reading or, without one, the
+indoor temperature weather compensation works with. The value cannot say
+which, so every gateway with a boiler is offered the setting and the user
+decides whether to use it.
 """
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.const import STATE_UNKNOWN
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_send
@@ -20,7 +20,6 @@ from vaillant_plus_cn_api import Device
 
 from custom_components.vaillant_plus.const import (
     API_CLIENT,
-    CONF_NO_ROOM_SENSOR,
     DISPATCHERS,
     DOMAIN,
     EVT_DEVICE_CONNECTED,
@@ -56,62 +55,45 @@ async def _connect(hass, device_api_client, attrs):
     await hass.async_block_till_done()
 
 
-async def test_first_255_records_no_room_sensor_and_offers_the_setting(
-    hass, device_api_client
+@pytest.mark.parametrize("indoor_temperature", [255, 21])
+async def test_every_gateway_with_a_boiler_gets_the_setting(
+    hass, device_api_client, indoor_temperature
 ):
-    entry, added = await _setup(hass, device_api_client)
+    """With or without a room sensor: the user decides whether to set it."""
+    _, added = await _setup(hass, device_api_client)
 
-    await _connect(hass, device_api_client, {"indoor_temperature": 255, "ebus_status": 1})
+    await _connect(
+        hass,
+        device_api_client,
+        {"indoor_temperature": indoor_temperature, "ebus_status": 1},
+    )
 
-    assert entry.data[CONF_NO_ROOM_SENSOR] is True
     assert len(added) == 1
     number = added[0]
     number.update_from_latest_data(device_api_client.device_attrs)
-    # Unknown until set, but settable.
-    assert number.native_value is None
+    # 255 until it is set: unknown, but still settable.
+    assert number.native_value == (None if indoor_temperature == 255 else 21)
     assert number.available is True
 
 
-async def test_a_reading_without_a_recorded_255_is_a_room_sensor(
+async def test_gateway_without_a_boiler_gets_no_setting_until_one_connects(
     hass, device_api_client
 ):
-    entry, added = await _setup(hass, device_api_client)
-
-    await _connect(hass, device_api_client, {"indoor_temperature": 21, "ebus_status": 1})
-
-    assert added == []
-    assert CONF_NO_ROOM_SENSOR not in entry.data
-
-
-async def test_the_recorded_255_survives_a_set_value(hass, device_api_client):
-    """After a restart the gateway reports what the user set, not 255."""
-    _, added = await _setup(hass, device_api_client, data={CONF_NO_ROOM_SENSOR: True})
-
-    await _connect(hass, device_api_client, {"indoor_temperature": 21, "ebus_status": 1})
-
-    assert len(added) == 1
-    added[0].update_from_latest_data(device_api_client.device_attrs)
-    assert added[0].native_value == 21
-
-
-async def test_255_without_a_boiler_says_nothing_about_a_room_sensor(
-    hass, device_api_client
-):
-    entry, added = await _setup(hass, device_api_client)
+    _, added = await _setup(hass, device_api_client)
 
     await _connect(hass, device_api_client, {"indoor_temperature": 255, "ebus_status": 0})
-
     assert added == []
-    assert CONF_NO_ROOM_SENSOR not in entry.data
+
+    await _connect(hass, device_api_client, {"indoor_temperature": 255, "ebus_status": 1})
+    assert len(added) == 1
 
 
 async def test_vsmart_gets_no_setting(hass, device_api_client):
-    entry, added = await _setup(hass, device_api_client, platform=VSMART)
+    _, added = await _setup(hass, device_api_client, platform=VSMART)
 
     await _connect(hass, device_api_client, {"indoor_temperature": 255, "ebus_status": 1})
 
     assert added == []
-    assert CONF_NO_ROOM_SENSOR not in entry.data
 
 
 async def test_setting_the_value_writes_indoor_temperature(hass, device_api_client):
@@ -143,34 +125,8 @@ async def test_a_failed_write_raises_and_keeps_the_value(hass, device_api_client
     assert device_api_client.device_attrs["indoor_temperature"] == 20
 
 
-@pytest.mark.parametrize(("no_room_sensor", "expected"), [(False, 21), (True, None)])
-async def test_the_sensor_shows_only_a_measurement(
-    hass, device_api_client, no_room_sensor, expected
-):
-    """Without a room sensor the value is the setting, so the read-only
-    sensor must not present it as the room's temperature."""
-    from custom_components.vaillant_plus.sensor import (
-        SENSOR_DESCRIPTIONS,
-        VaillantSensorEntity,
-    )
-
-    description = next(d for d in SENSOR_DESCRIPTIONS if d.key == "indoor_temperature")
-    entry = MockConfigEntry(
-        domain=DOMAIN, data={CONF_NO_ROOM_SENSOR: True} if no_room_sensor else {}
-    )
-    sensor = VaillantSensorEntity(device_api_client, description)
-    sensor.platform = MagicMock(config_entry=entry)
-    device_api_client._device_attrs = {"indoor_temperature": 21}
-
-    sensor.update_from_latest_data({"indoor_temperature": 21})
-
-    assert sensor.native_value == expected
-    assert sensor._attr_available is (expected is not None)
-
-
 async def test_end_to_end_through_the_config_entry(hass, bypass_login):
-    """Set it through the service, then reload: the setting stays and the
-    sensor never shows it as a reading."""
+    """Set it through the number service, as a user would."""
     from custom_components.vaillant_plus import async_setup
 
     gateway = Device(
@@ -195,19 +151,16 @@ async def test_end_to_end_through_the_config_entry(hass, bypass_login):
         await hass.async_block_till_done()
         assert entry.state is ConfigEntryState.LOADED
 
-        def subscribe(attrs):
-            client = hass.data[DOMAIN][API_CLIENT][entry.entry_id]._websocket_client
-            client._on_subscribe_handler(attrs)
-
-        subscribe({"indoor_temperature": 255, "ebus_status": 1, "Heating_Enable": 1})
+        client = hass.data[DOMAIN][API_CLIENT][entry.entry_id]._websocket_client
+        client._on_subscribe_handler(
+            {"indoor_temperature": 255, "ebus_status": 1, "Heating_Enable": 1}
+        )
         await hass.async_block_till_done()
 
         registry = er.async_get(hass)
         number_id = registry.async_get_entity_id("number", DOMAIN, "1_indoor_temperature")
-        sensor_id = registry.async_get_entity_id("sensor", DOMAIN, "1_indoor_temperature")
         assert number_id is not None
         assert hass.states.get(number_id).state == STATE_UNKNOWN
-        assert entry.data[CONF_NO_ROOM_SENSOR] is True
 
         await hass.services.async_call(
             "number", "set_value", {"entity_id": number_id, "value": 21}, blocking=True
@@ -215,12 +168,3 @@ async def test_end_to_end_through_the_config_entry(hass, bypass_login):
         control.assert_awaited_once()
         assert control.await_args.args[-1] == {"indoor_temperature": 21}
         assert float(hass.states.get(number_id).state) == 21
-        assert hass.states.get(sensor_id).state == STATE_UNAVAILABLE
-
-        assert await hass.config_entries.async_reload(entry.entry_id)
-        await hass.async_block_till_done()
-        subscribe({"indoor_temperature": 21, "ebus_status": 1, "Heating_Enable": 1})
-        await hass.async_block_till_done()
-
-        assert float(hass.states.get(number_id).state) == 21
-        assert hass.states.get(sensor_id).state == STATE_UNAVAILABLE
