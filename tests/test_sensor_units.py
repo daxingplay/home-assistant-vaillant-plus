@@ -90,3 +90,106 @@ def test_native_units_are_valid_for_their_device_class():
             )
 
     assert not invalid, f"sensor descriptions with an invalid unit: {invalid}"
+
+
+def test_temperature_sensors_drop_no_data_sentinels():
+    """127.5 / 255 mean "no reading" and must never be published.
+
+    Left unfiltered they are recorded into long term statistics as genuine
+    temperatures, the kind of poisoned history that #48 had to clean up by
+    hand.
+    """
+    from unittest.mock import MagicMock
+
+    from homeassistant.components.sensor import (
+        SensorDeviceClass,
+        SensorEntityDescription,
+    )
+    from homeassistant.const import UnitOfTemperature
+
+    from custom_components.vaillant_plus.sensor import VaillantSensorEntity
+
+    entity = VaillantSensorEntity(
+        MagicMock(),
+        SensorEntityDescription(
+            key="Flow_Temperature_Setpoint",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        ),
+    )
+
+    for sentinel in (127.5, 255):
+        entity.update_from_latest_data({"Flow_Temperature_Setpoint": sentinel})
+        assert entity.native_value is None
+        assert entity.available is False
+
+    entity.update_from_latest_data({"Flow_Temperature_Setpoint": 45})
+    assert entity.native_value == 45
+
+
+def test_non_temperature_sensors_keep_sentinel_looking_values():
+    """255 is a real fault word value, not a sentinel, outside temperatures."""
+    from unittest.mock import MagicMock
+
+    from homeassistant.components.sensor import SensorEntityDescription
+
+    from custom_components.vaillant_plus.sensor import VaillantSensorEntity
+
+    entity = VaillantSensorEntity(
+        MagicMock(), SensorEntityDescription(key="Gateway_Fault_List_1")
+    )
+    entity.update_from_latest_data({"Gateway_Fault_List_1": 255})
+
+    assert entity.native_value == 255
+
+
+def test_burner_modulation_is_a_percentage_and_drops_out_of_range_values():
+    """The gateway's current modulation is shown as a percentage of full fire."""
+    from unittest.mock import MagicMock
+
+    from homeassistant.const import PERCENTAGE
+
+    from custom_components.vaillant_plus.sensor import (
+        SENSOR_DESCRIPTIONS,
+        VaillantSensorEntity,
+    )
+
+    description = next(
+        d for d in SENSOR_DESCRIPTIONS if d.key == "valueModulation_currentValue"
+    )
+    assert description.native_unit_of_measurement == PERCENTAGE
+
+    entity = VaillantSensorEntity(MagicMock(), description)
+    # Values captured from a turboTEC plus warming up on a 43 °C setpoint.
+    for value in (42, 11, 0, 100):
+        entity.update_from_latest_data({"valueModulation_currentValue": value})
+        assert entity.native_value == value
+
+    for bad in (255, -1, "000080bf"):
+        entity.update_from_latest_data({"valueModulation_currentValue": bad})
+        assert entity.native_value is None
+        assert entity.available is False
+
+
+def test_indoor_temperature_is_only_created_for_devices_that_report_it():
+    """`indoor_temperature` is a gateway attribute; a vSMART never sends it.
+
+    Sensors are created per attribute *present in the payload*, so adding a
+    description cannot create an entity on a device that does not report the
+    key. A vSMART reports `Room_Temperature` instead, so the two families get
+    one room reading each rather than one empty entity apiece.
+    """
+    from custom_components.vaillant_plus.sensor import SENSOR_DESCRIPTIONS
+
+    # Captured payloads, trimmed to the room-temperature attributes.
+    vsmart_attrs = {"Room_Temperature": 26, "Outdoor_Temperature": 26}
+    gateway_attrs = {"indoor_temperature": 255, "ebus_status": 0}
+
+    def created_for(attrs):
+        return {d.key for d in SENSOR_DESCRIPTIONS if d.key in attrs}
+
+    assert "indoor_temperature" not in created_for(vsmart_attrs)
+    assert created_for(vsmart_attrs) == {"Room_Temperature", "Outdoor_Temperature"}
+
+    assert "Room_Temperature" not in created_for(gateway_attrs)
+    assert "indoor_temperature" in created_for(gateway_attrs)

@@ -31,6 +31,9 @@
             "burn_status": {
                 "name": "燃烧状态"
             },
+            "burner_modulation": {
+                "name": "燃烧器火力"
+            },
             "ch_power": {
                 "name": "采暖功率（原始值）"
             },
@@ -163,6 +166,9 @@
             "heating_system_setting": {
                 "name": "采暖系统设置"
             },
+            "indoor_temperature": {
+                "name": "室内温度"
+            },
             "lower_limitation_of_ch_setpoint": {
                 "name": "暖气最小设置温度"
             },
@@ -177,6 +183,9 @@
             },
             "mode_setting_ch": {
                 "name": "采暖模式设置"
+            },
+            "mode_setting_dhw": {
+                "name": "生活热水模式设置"
             },
             "outdoor_temperature": {
                 "name": "室外温度"
@@ -242,6 +251,20 @@
             },
             "weather_compensation": {
                 "name": "气候补偿状态"
+            }
+        },
+        "climate": {
+            "central_heating": {
+                "name": "供暖"
+            }
+        },
+        "water_heater": {
+            "domestic_hot_water": {
+                "name": "生活热水",
+                "state": {
+                    "on": "开启",
+                    "off": "关闭"
+                }
             }
         }
     }

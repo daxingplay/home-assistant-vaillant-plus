@@ -32,7 +32,7 @@ def test_climate_accepts_current_heating_enable_attribute():
     """Current China gateway payloads may expose Heating_Enable only."""
     from custom_components.vaillant_plus.climate import HEATING_ENABLE_ATTRS
 
-    assert HEATING_ENABLE_ATTRS == ("Enabled_Heating", "Heating_Enable")
+    assert set(HEATING_ENABLE_ATTRS) == {"Enabled_Heating", "Heating_Enable"}
 
 
 def test_client_merges_partial_device_updates():
@@ -71,7 +71,7 @@ def test_water_heater_uses_tank_temperature_when_available():
     source = (ROOT / "custom_components/vaillant_plus/water_heater.py").read_text()
 
     assert '"Tank_temperature"' in source
-    assert 'return self.get_device_attr("Flow_temperature")' in source
+    assert 'valid_temperature(self.get_device_attr("Flow_temperature"))' in source
 
 
 def test_water_heater_prefers_current_dhw_setpoint():
