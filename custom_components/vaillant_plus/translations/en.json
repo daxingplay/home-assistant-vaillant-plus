@@ -89,30 +89,57 @@
                 "name": "Flow temperature setpoint"
             },
             "gas_ch_consumption_monthly": {
+                "name": "Central heating gas consumption monthly"
+            },
+            "gas_ch_consumption_monthly_raw": {
                 "name": "Central heating gas consumption monthly raw"
             },
             "gas_ch_consumption_today": {
+                "name": "Central heating gas consumption today"
+            },
+            "gas_ch_consumption_today_raw": {
                 "name": "Central heating gas consumption today raw"
             },
             "gas_ch_consumption_yearly": {
+                "name": "Central heating gas consumption yearly"
+            },
+            "gas_ch_consumption_yearly_raw": {
                 "name": "Central heating gas consumption yearly raw"
             },
             "gas_ch_consumption_yesterday": {
+                "name": "Central heating gas consumption yesterday"
+            },
+            "gas_ch_consumption_yesterday_raw": {
                 "name": "Central heating gas consumption yesterday raw"
             },
             "gas_consumption": {
+                "name": "Gas consumption"
+            },
+            "gas_consumption_raw": {
                 "name": "Gas consumption raw"
             },
             "gas_dhw_consumption_monthly": {
+                "name": "Domestic hot water gas consumption monthly"
+            },
+            "gas_dhw_consumption_monthly_raw": {
                 "name": "Domestic hot water gas consumption monthly raw"
             },
             "gas_dhw_consumption_today": {
+                "name": "Domestic hot water gas consumption today"
+            },
+            "gas_dhw_consumption_today_raw": {
                 "name": "Domestic hot water gas consumption today raw"
             },
             "gas_dhw_consumption_yearly": {
+                "name": "Domestic hot water gas consumption yearly"
+            },
+            "gas_dhw_consumption_yearly_raw": {
                 "name": "Domestic hot water gas consumption yearly raw"
             },
             "gas_dhw_consumption_yesterday": {
+                "name": "Domestic hot water gas consumption yesterday"
+            },
+            "gas_dhw_consumption_yesterday_raw": {
                 "name": "Domestic hot water gas consumption yesterday raw"
             },
             "gateway_fault_list_1": {
