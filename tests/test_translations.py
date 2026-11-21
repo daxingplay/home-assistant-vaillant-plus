@@ -22,8 +22,11 @@ COMPONENT = ROOT / "custom_components/vaillant_plus"
 TRANSLATION_FILES = (
     COMPONENT / "strings.json",
     COMPONENT / "translations/en.json",
-    COMPONENT / "translations/zh.json",
+    COMPONENT / "translations/zh-Hans.json",
 )
+
+# Languages whose entity names are checked against what Home Assistant resolves.
+LANGUAGES = ("en", "zh-Hans")
 
 
 def _descriptions(module_name: str, container: str) -> list:
@@ -115,10 +118,13 @@ async def test_home_assistant_resolves_every_entity_name(hass):
 
     await async_setup_component(hass, DOMAIN, {})
 
-    for language in ("en", "zh"):
+    for language in LANGUAGES:
         translations = await async_get_translations(
             hass, language, "entity", {DOMAIN}
         )
+        names = json.loads(
+            (COMPONENT / f"translations/{language}.json").read_text()
+        )["entity"]
 
         for domain, (module_name, container) in DOMAINS.items():
             for description in _descriptions(module_name, container):
@@ -126,5 +132,20 @@ async def test_home_assistant_resolves_every_entity_name(hass):
                     f"component.{DOMAIN}.entity.{domain}"
                     f".{description.translation_key}.name"
                 )
-                assert translations.get(key), f"{language}: {key} did not resolve"
+                expected = names[domain][description.translation_key]["name"]
+                assert translations.get(key) == expected, (
+                    f"{language}: {key} resolved to {translations.get(key)!r}, "
+                    f"expected {expected!r}"
+                )
+
+
+def test_translation_files_use_home_assistant_language_codes():
+    """A file named after a code Home Assistant never requests is dead weight.
+
+    `zh.json` shipped for several releases and was never read, see issue #65.
+    """
+    shipped = {path.stem for path in (COMPONENT / "translations").glob("*.json")}
+
+    assert "zh" not in shipped, "Simplified Chinese must be zh-Hans.json"
+    assert set(LANGUAGES) <= shipped
 
