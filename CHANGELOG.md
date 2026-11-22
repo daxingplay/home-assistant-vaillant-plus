@@ -1,8 +1,9 @@
 # Changelog
 
 <!--next-version-placeholder-->
-## Unreleased
-* [#64](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/64) **Accounts with several devices of the same model can tell them apart when adding them.** **Devices in a second home, and devices shared from another account, can now be added.** Only the first home of an account was read, so its other devices never appeared in the device list. The device list now shows the name each device was given in the Vaillant app and its device id, instead of only the shared model name, and a new entry is titled with that name, so two vSMART Pro no longer both show as "vSMART Pro". Devices that are already set up are marked ✓, and the first one not yet set up is preselected. Each device is still added as its own entry: add the integration again for the next device.
+## v2.0.0-beta.2 (2026-11-22)
+* [#64](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/64) **Devices in a second home, and devices shared from another account, can now be added.** Only the first home of an account was read, so its other devices never appeared in the device list.
+* **Several devices of the same model can be told apart when adding them.** The device list shows the name each device was given in the Vaillant app and its device id, instead of only the shared model name, and a new entry is titled with that name, so two vSMART Pro no longer both show as "vSMART Pro". Devices that are already set up are marked ✓, and the first one not yet set up is preselected. Each device is still added as its own entry: add the integration again for the next device. Existing entries keep their titles, and nothing changes for devices already set up.
 * Requires vaillant-plus-cn-api 2.2.0, which reads every home of the account and the devices shared into it.
 
 ## v2.0.0-beta.1 (2026-11-21)
