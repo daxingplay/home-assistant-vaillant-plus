@@ -249,14 +249,8 @@ def _device(device_id: str, **overrides) -> Device:
         serial_number="",
         services_count=0,
     )
-    alias = overrides.pop("dev_alias", None)
     fields.update(overrides)
-    device = Device(**fields)
-    if alias is not None:
-        # `dev_alias` arrives with vaillant-plus-cn-api 2.2.0; set it as an
-        # attribute so the test runs against 2.1.0 as well.
-        device.dev_alias = alias
-    return device
+    return Device(**fields)
 
 
 async def _select_form(hass: HomeAssistant, devices: list[Device]) -> FlowResult:

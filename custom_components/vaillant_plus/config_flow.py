@@ -174,10 +174,9 @@ def _device_title(device: Device) -> str:
 
     `product_name` is the catalog name every unit of a model shares, so two
     vSMART Pro on one account would get the same title. The alias the owner
-    gave the device in the app tells them apart. It is only provided by
-    vaillant-plus-cn-api 2.2.0 and later, so it is read defensively.
+    gave the device in the app tells them apart.
     """
-    alias = getattr(device, "dev_alias", "") or ""
+    alias = device.dev_alias
     product_name = device.product_name or ""
     if alias and alias != product_name:
         return f"{alias} ({product_name})" if product_name else alias
