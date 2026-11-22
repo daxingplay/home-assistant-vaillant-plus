@@ -7,6 +7,12 @@
           "username": "[%key:common::config_flow::data::username%]",
           "password": "[%key:common::config_flow::data::password%]"
         }
+      },
+      "select": {
+        "data": {
+          "select_device": "Vaillant device"
+        },
+        "description": "Select the Vaillant device to set up. Each device is added as its own entry; run this again to add the next one. Devices marked ✓ are already set up, and choosing one again refreshes its login."
       }
     },
     "error": {

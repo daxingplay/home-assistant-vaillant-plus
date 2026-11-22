@@ -14,7 +14,7 @@
     "vaillant_plus_cn_api"
   ],
   "requirements": [
-    "vaillant-plus-cn-api==2.1.0"
+    "vaillant-plus-cn-api==2.2.0"
   ],
   "ssdp": [],
   "version": "2.0.0-beta.1",

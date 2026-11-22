@@ -6,6 +6,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult, FlowResultType
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+from vaillant_plus_cn_api import Device
 
 from custom_components.vaillant_plus.const import CONF_DID, CONF_TOKEN, DOMAIN
 
@@ -56,7 +57,7 @@ async def test_successful_config_flow(
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
-        user_input={"select_device": "pn_1"},
+        user_input={"select_device": "1"},
     )
 
     # Check that the config flow is complete and a new entry is created with
@@ -187,7 +188,7 @@ async def test_update_existing_entry(
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
-        user_input={"select_device": "pn_1"},
+        user_input={"select_device": "1"},
     )
 
     assert result["type"] == FlowResultType.CREATE_ENTRY
@@ -226,3 +227,131 @@ async def test_update_existing_entry(
 
 #     # Verify that the options were updated
 #     assert entry.options == {BINARY_SENSOR: True, SENSOR: False, SWITCH: True}
+
+
+def _device(device_id: str, **overrides) -> Device:
+    """A bound device as the API library returns it."""
+    fields = dict(
+        id=device_id,
+        mac=f"mac{device_id}",
+        product_key="pk",
+        product_id="p1",
+        product_name="vSMART Pro",
+        product_verbose_name="pvn",
+        is_online=True,
+        is_manager=True,
+        group_id=2,
+        sno="sno",
+        create_time="2000-01-01 00:00:00",
+        last_offline_time="2000-12-31 00:00:00",
+        model_alias="",
+        model="",
+        serial_number="",
+        services_count=0,
+    )
+    fields.update(overrides)
+    return Device(**fields)
+
+
+async def _select_form(hass: HomeAssistant, devices: list[Device]) -> FlowResult:
+    """Log in with an account that has `devices` bound and stop at selection."""
+    with patch(
+        "vaillant_plus_cn_api.VaillantApiClient.get_device_list",
+        return_value=devices,
+    ):
+        result = await _submit_user_step(hass)
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "select"
+    return result
+
+
+def _options(result: FlowResult) -> dict[str, str]:
+    """The choices offered by the selection form, keyed by device id."""
+    return result["data_schema"].schema["select_device"].container
+
+
+async def test_every_bound_device_is_offered(hass: HomeAssistant, bypass_login):
+    """Two units of the same model are both listed and tell apart (#64)."""
+    result = await _select_form(
+        hass,
+        [
+            _device("d1", dev_alias="客厅"),
+            _device("d2", dev_alias="卧室"),
+            _device("d3"),
+        ],
+    )
+
+    options = _options(result)
+    assert list(options) == ["d1", "d2", "d3"]
+    assert len(set(options.values())) == 3
+    assert options["d1"] == "客厅 (vSMART Pro) - d1"
+    assert options["d3"] == "vSMART Pro - d3"
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], user_input={"select_device": "d2"}
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    # The owner's name for it, so two entries for one model differ.
+    assert result["title"] == "卧室 (vSMART Pro)"
+    assert result["data"][CONF_DID] == "d2"
+
+
+async def test_second_device_can_be_added(hass: HomeAssistant, bypass_login):
+    """With one device set up, the other one is marked and preselected."""
+    MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="d1",
+        data={CONF_DID: "d1", CONF_TOKEN: "test_encoded_token"},
+    ).add_to_hass(hass)
+
+    result = await _select_form(hass, [_device("d1"), _device("d2")])
+
+    options = _options(result)
+    assert options["d1"].endswith("✓")
+    assert not options["d2"].endswith("✓")
+    marker = result["data_schema"].schema
+    default = next(k for k in marker if k == "select_device").default()
+    assert default == "d2"
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], user_input={"select_device": "d2"}
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_DID] == "d2"
+    assert len(hass.config_entries.async_entries(DOMAIN)) == 2
+
+
+async def test_entry_from_before_the_upgrade_is_kept(
+    hass: HomeAssistant, bypass_login
+):
+    """An entry created by an older release is untouched by the new list.
+
+    The selection list used to be keyed by "<product_name>_<did>" and is now
+    keyed by did. That key only lives inside the flow; an entry stores its
+    did as unique id and data, so existing entries are recognised as before.
+    Re-adding one refreshes its login and keeps its title and did.
+    """
+    old_entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="vSMART Pro",
+        unique_id="d1",
+        data={CONF_DID: "d1", CONF_TOKEN: "old_token"},
+    )
+    old_entry.add_to_hass(hass)
+
+    result = await _select_form(
+        hass, [_device("d1", dev_alias="客厅"), _device("d2")]
+    )
+    assert _options(result)["d1"].endswith("✓")
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], user_input={"select_device": "d1"}
+    )
+
+    assert result["type"] == FlowResultType.ABORT
+    assert result["reason"] == "reauth_successful"
+    assert len(hass.config_entries.async_entries(DOMAIN)) == 1
+    assert old_entry.title == "vSMART Pro"
+    assert old_entry.unique_id == "d1"
+    assert old_entry.data[CONF_DID] == "d1"
+    assert old_entry.data[CONF_TOKEN] != "old_token"
