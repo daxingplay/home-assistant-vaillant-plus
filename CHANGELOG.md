@@ -1,6 +1,10 @@
 # Changelog
 
 <!--next-version-placeholder-->
+## v2.0.0 (2026-11-22)
+* **First stable release of 2.0.** It contains everything from [v2.0.0-beta.1](#v200-beta1-2026-11-21) and [v2.0.0-beta.2](#v200-beta2-2026-11-22) below, with no changes since beta.2. **Read v2.0.0-beta.1 before upgrading from v1.5.1:** the climate and water heater entities are renamed (entity ids do not change), familyCONNECT gateways get central heating control, and vSMART owners see changes too.
+* Verified on a vSMART Pro by the maintainer, and on a familyCONNECT VC 100p CN with a turboTEC plus by [@Archie87](https://github.com/Archie87) (#62).
+
 ## v2.0.0-beta.2 (2026-11-22)
 * [#64](https://github.com/daxingplay/home-assistant-vaillant-plus/issues/64) **Devices in a second home, and devices shared from another account, can now be added.** Only the first home of an account was read, so its other devices never appeared in the device list.
 * **Several devices of the same model can be told apart when adding them.** The device list shows the name each device was given in the Vaillant app and its device id, instead of only the shared model name, and a new entry is titled with that name, so two vSMART Pro no longer both show as "vSMART Pro". Devices that are already set up are marked ✓, and the first one not yet set up is preselected. Each device is still added as its own entry: add the integration again for the next device. Existing entries keep their titles, and nothing changes for devices already set up.
