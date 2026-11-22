@@ -319,3 +319,39 @@ async def test_second_device_can_be_added(hass: HomeAssistant, bypass_login):
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_DID] == "d2"
     assert len(hass.config_entries.async_entries(DOMAIN)) == 2
+
+
+async def test_entry_from_before_the_upgrade_is_kept(
+    hass: HomeAssistant, bypass_login
+):
+    """An entry created by an older release is untouched by the new list.
+
+    The selection list used to be keyed by "<product_name>_<did>" and is now
+    keyed by did. That key only lives inside the flow; an entry stores its
+    did as unique id and data, so existing entries are recognised as before.
+    Re-adding one refreshes its login and keeps its title and did.
+    """
+    old_entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="vSMART Pro",
+        unique_id="d1",
+        data={CONF_DID: "d1", CONF_TOKEN: "old_token"},
+    )
+    old_entry.add_to_hass(hass)
+
+    result = await _select_form(
+        hass, [_device("d1", dev_alias="客厅"), _device("d2")]
+    )
+    assert _options(result)["d1"].endswith("✓")
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], user_input={"select_device": "d1"}
+    )
+
+    assert result["type"] == FlowResultType.ABORT
+    assert result["reason"] == "reauth_successful"
+    assert len(hass.config_entries.async_entries(DOMAIN)) == 1
+    assert old_entry.title == "vSMART Pro"
+    assert old_entry.unique_id == "d1"
+    assert old_entry.data[CONF_DID] == "d1"
+    assert old_entry.data[CONF_TOKEN] != "old_token"
